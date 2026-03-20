@@ -47,13 +47,13 @@ export function ItemPicker({ onSelect, onClose }: ItemPickerProps) {
       />
 
       {/* Category tabs */}
-      <div className="flex gap-1" role="tablist" aria-label="Kategorie položek">
+      <div className="flex gap-2" role="tablist" aria-label="Kategorie položek">
         <button
           type="button"
           role="tab"
           aria-selected={activeCategory === null}
           onClick={() => setActiveCategory(null)}
-          className={`h-9 rounded px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+          className={`h-9 rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
             activeCategory === null ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
           }`}
         >
@@ -68,7 +68,7 @@ export function ItemPicker({ onSelect, onClose }: ItemPickerProps) {
               role="tab"
               aria-selected={activeCategory === cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex items-center gap-1 h-9 rounded px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+              className={`flex items-center gap-1 h-9 rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 activeCategory === cat ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
               }`}
             >
@@ -81,13 +81,13 @@ export function ItemPicker({ onSelect, onClose }: ItemPickerProps) {
 
       {/* Items grid */}
       <ScrollArea className="max-h-[240px]">
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-2 gap-2">
           {filtered.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => onSelect(item.id)}
-              className="flex flex-col items-start rounded-md border border-border p-2 min-h-[44px] text-left text-xs transition-colors hover:bg-accent active:bg-accent"
+              className="flex flex-col items-start rounded-lg border border-border p-2 min-h-[44px] text-left text-xs transition-colors hover:bg-accent active:bg-accent"
             >
               <span className="font-medium">{item.name}</span>
               <span className="font-mono text-muted-foreground">

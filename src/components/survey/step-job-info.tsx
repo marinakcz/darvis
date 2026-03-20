@@ -1,3 +1,4 @@
+// SwiftUI: Form with grouped Sections
 "use client"
 
 import type { Job, JobType } from "@/lib/types"
@@ -62,7 +63,7 @@ export function StepJobInfo({ job, onChange, onNext }: StepJobInfoProps) {
                     key={type}
                     type="button"
                     onClick={() => onChange((prev) => ({ ...prev, jobType: type }))}
-                    className={`flex shrink-0 flex-col items-center gap-1.5 rounded-lg border px-3 py-2.5 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                    className={`flex shrink-0 flex-col items-center gap-1.5 rounded-lg border px-3 py-2.5 min-h-[44px] text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                       isActive
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border text-muted-foreground hover:bg-accent"
@@ -139,7 +140,7 @@ export function StepJobInfo({ job, onChange, onNext }: StepJobInfoProps) {
               }
               placeholder="25"
             />
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Centrála: U Pekařky 484/1a, Praha 8
             </p>
           </FieldRow>

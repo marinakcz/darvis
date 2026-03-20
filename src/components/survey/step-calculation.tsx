@@ -44,7 +44,7 @@ export function StepCalculation({ job, onChange, onNext, onBack }: StepCalculati
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             {VEHICLES.map((vehicle) => {
               const isActive = job.vehicleId === vehicle.id
               const isSuggested = suggestedVehicle === vehicle.id
@@ -63,7 +63,7 @@ export function StepCalculation({ job, onChange, onNext, onBack }: StepCalculati
                     <span className={`text-sm font-medium ${isActive ? "text-primary" : ""}`}>
                       {vehicle.name}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">{vehicle.description}</span>
+                    <span className="text-xs text-muted-foreground">{vehicle.description}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-muted-foreground">

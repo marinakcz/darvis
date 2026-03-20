@@ -1,3 +1,4 @@
+// SwiftUI: List row with Stepper
 "use client"
 
 import type { InventoryItem } from "@/lib/types"
@@ -34,7 +35,7 @@ export function ItemRow({ item, onUpdate, onRemove }: ItemRowProps) {
   const volume = catalog.volume * item.quantity
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-border p-2.5">
+    <div className="flex flex-col gap-2 rounded-xl border border-border p-2.5">
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
           <span className="text-sm font-medium">{catalog.name}</span>

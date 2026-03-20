@@ -1,3 +1,4 @@
+// SwiftUI: TabView
 "use client"
 
 import { ClipboardList, Calendar, PlusCircle, User } from "lucide-react"
@@ -30,7 +31,7 @@ export function MobileTabBar({ activeTab, onNavigate }: MobileTabBarProps) {
             }`}
           >
             <Icon className="size-5" />
-            <span className="text-[10px] leading-tight">{tab.label}</span>
+            <span className="text-[11px] leading-tight">{tab.label}</span>
           </button>
         )
       })}

@@ -1,3 +1,4 @@
+// SwiftUI: Custom ProgressIndicator
 interface Step {
   num: number
   label: string
@@ -18,7 +19,7 @@ const DEFAULT_STEPS: Step[] = [
 
 export function WizardNav({ currentStep, onStepClick, steps = DEFAULT_STEPS }: WizardNavProps) {
   return (
-    <nav aria-label="Průvodce zakázkou" className="flex gap-1">
+    <nav aria-label="Průvodce zakázkou" className="flex gap-2">
       {steps.map(({ num, label }) => {
         const isActive = num === currentStep
         const isDone = num < currentStep
@@ -29,7 +30,7 @@ export function WizardNav({ currentStep, onStepClick, steps = DEFAULT_STEPS }: W
             onClick={() => onStepClick(num)}
             aria-current={isActive ? "step" : undefined}
             aria-label={`Krok ${num}: ${label}`}
-            className={`flex flex-1 flex-col items-center gap-1 rounded-md px-1.5 py-2.5 min-h-[44px] text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+            className={`flex flex-1 flex-col items-center gap-1 rounded-lg px-1.5 py-2.5 min-h-[44px] text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
               isActive
                 ? "bg-primary text-primary-foreground"
                 : isDone
@@ -37,8 +38,8 @@ export function WizardNav({ currentStep, onStepClick, steps = DEFAULT_STEPS }: W
                   : "text-muted-foreground"
             }`}
           >
-            <span className="font-mono text-[10px]">{num}</span>
-            <span className="text-[10px]">{label}</span>
+            <span className="font-mono text-xs">{num}</span>
+            <span className="text-xs">{label}</span>
           </button>
         )
       })}
