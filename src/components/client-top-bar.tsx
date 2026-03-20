@@ -21,47 +21,23 @@ import { Button } from "@/components/ui/button"
 import { ListChecks, Lock, ShieldCheck } from "lucide-react"
 
 function AdminPinModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [digits, setDigits] = useState(["", "", "", ""])
+  const [pin, setPin] = useState("")
   const [error, setError] = useState(false)
 
-  function handleInput(index: number, value: string) {
-    const digit = value.replace(/\D/g, "").slice(-1)
-    const next = [...digits]
-    next[index] = digit
-    setDigits(next)
-    setError(false)
-
-    if (digit && index < 3) {
-      document.getElementById(`admin-pin-${index + 1}`)?.focus()
-    }
-
-    const fullPin = next.join("")
-    if (fullPin.length === 4 && next.every((d) => d !== "")) {
-      fetch("/api/admin/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: fullPin }),
-      }).then((res) => {
-        if (res.ok) {
-          // Cookie is set by server response
-          window.location.href = "/admin/feedback"
-        } else {
-          setError(true)
-          setDigits(["", "", "", ""])
-          document.getElementById("admin-pin-0")?.focus()
-        }
-      })
-    }
-  }
-
-  function handleKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      document.getElementById(`admin-pin-${index - 1}`)?.focus()
-      const next = [...digits]
-      next[index - 1] = ""
-      setDigits(next)
-    }
-    if (e.key === "Escape") onClose()
+  function handleSubmit() {
+    if (pin.length < 1) return
+    fetch("/api/admin/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin }),
+    }).then((res) => {
+      if (res.ok) {
+        window.location.href = "/admin/feedback"
+      } else {
+        setError(true)
+        setPin("")
+      }
+    })
   }
 
   if (!open) return null
@@ -69,34 +45,22 @@ function AdminPinModal({ open, onClose }: { open: boolean; onClose: () => void }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex flex-col items-center gap-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-2xl">
+      <div className="relative flex flex-col items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-2xl w-72">
         <Lock className="size-6 text-zinc-500" />
-        <h2 className="text-base font-semibold text-zinc-200">Admin PIN</h2>
-
-        <div className="flex gap-3">
-          {digits.map((digit, i) => (
-            <input
-              key={i}
-              id={`admin-pin-${i}`}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={digit ? "\u2022" : ""}
-              onChange={(e) => handleInput(i, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(i, e)}
-              autoFocus={i === 0}
-              className={`w-12 h-14 text-center text-xl rounded-xl border-2 bg-zinc-950 outline-none transition-all ${
-                error
-                  ? "border-red-500/50 bg-red-500/5"
-                  : digit
-                    ? "border-zinc-500 bg-zinc-800"
-                    : "border-zinc-700 focus:border-zinc-500"
-              }`}
-            />
-          ))}
-        </div>
-
-        {error && <p className="text-sm text-red-400">Nesprávný PIN</p>}
+        <h2 className="text-base font-semibold text-zinc-200">Admin</h2>
+        <Input
+          type="password"
+          value={pin}
+          onChange={(e) => { setPin(e.target.value); setError(false) }}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose() }}
+          placeholder="Kód"
+          className="h-11 text-center text-lg tracking-widest"
+          autoFocus
+        />
+        {error && <p className="text-sm text-red-400">Nesprávný kód</p>}
+        <Button className="w-full h-10" onClick={handleSubmit} disabled={pin.length < 1}>
+          Vstoupit
+        </Button>
       </div>
     </div>
   )
@@ -126,7 +90,9 @@ export function ClientTopBar() {
           <div className="flex items-center gap-2 text-sm">
             <span className="font-mono text-zinc-500">v0.1.0</span>
             <span className="text-zinc-700">·</span>
-            <span className="text-zinc-500">Aktualizováno 20. 3. 2026, 14:30</span>
+            <span className="text-zinc-500">
+            {new Date().toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric" })}
+          </span>
           </div>
         </div>
 

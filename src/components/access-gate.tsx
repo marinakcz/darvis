@@ -2,7 +2,9 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Lock, ArrowLeft } from "lucide-react"
+import { Lock } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 const COOKIE_CHECK_KEY = "darvis-access-checked"
 
@@ -12,68 +14,49 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
     return sessionStorage.getItem(COOKIE_CHECK_KEY) === "ok"
   })
   const [checked, setChecked] = useState(false)
-  const [digits, setDigits] = useState(["", "", "", ""])
+  const [pin, setPin] = useState("")
   const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(true)
 
-  // On first render, check if access cookie exists by hitting a test endpoint
+  // Check if access cookie is already valid
   if (!checked && !authorized) {
     setChecked(true)
-    fetch("/api/feedback")
+    fetch("/api/access/check")
       .then((r) => {
         if (r.ok) {
           sessionStorage.setItem(COOKIE_CHECK_KEY, "ok")
           setAuthorized(true)
         }
+        setLoading(false)
       })
-      .catch(() => {})
+      .catch(() => setLoading(false))
   }
 
-  function handleInput(index: number, value: string) {
-    const digit = value.replace(/\D/g, "").slice(-1)
-    const next = [...digits]
-    next[index] = digit
-    setDigits(next)
-    setError(false)
-
-    if (digit && index < 3) {
-      document.getElementById(`access-pin-${index + 1}`)?.focus()
-    }
-
-    const fullPin = next.join("")
-    if (fullPin.length === 4 && next.every((d) => d !== "")) {
-      fetch("/api/access/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: fullPin }),
-      }).then((res) => {
-        if (res.ok) {
-          sessionStorage.setItem(COOKIE_CHECK_KEY, "ok")
-          setAuthorized(true)
-        } else {
-          setError(true)
-          setDigits(["", "", "", ""])
-          document.getElementById("access-pin-0")?.focus()
-        }
-      })
-    }
+  function handleSubmit() {
+    if (pin.length < 1) return
+    fetch("/api/access/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin }),
+    }).then((res) => {
+      if (res.ok) {
+        sessionStorage.setItem(COOKIE_CHECK_KEY, "ok")
+        setAuthorized(true)
+      } else {
+        setError(true)
+        setPin("")
+      }
+    })
   }
 
-  function handleKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      document.getElementById(`access-pin-${index - 1}`)?.focus()
-      const next = [...digits]
-      next[index - 1] = ""
-      setDigits(next)
-    }
-  }
+  if (authorized) return <>{children}</>
 
-  if (authorized) {
-    return <>{children}</>
-  }
+  // Show nothing while checking cookie
+  if (loading) return <div className="min-h-screen bg-zinc-950" />
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-6 w-full max-w-sm px-6">
+      <div className="flex flex-col items-center gap-5 w-full max-w-xs px-6">
         <Image
           src="/logo.svg"
           alt="Darvis"
@@ -82,34 +65,21 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
           className="h-8 w-auto opacity-60"
         />
         <div className="text-center">
-          <h1 className="text-lg font-semibold text-zinc-200">Přístupový kód</h1>
-          <p className="text-sm text-zinc-500 mt-1">Zadejte PIN pro vstup</p>
+          <h1 className="text-lg font-semibold">Přístupový kód</h1>
         </div>
-
-        <div className="flex gap-3">
-          {digits.map((digit, i) => (
-            <input
-              key={i}
-              id={`access-pin-${i}`}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={digit ? "\u2022" : ""}
-              onChange={(e) => handleInput(i, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(i, e)}
-              autoFocus={i === 0}
-              className={`w-12 h-14 text-center text-xl rounded-xl border-2 bg-zinc-900 outline-none transition-all ${
-                error
-                  ? "border-red-500/50 bg-red-500/5"
-                  : digit
-                    ? "border-zinc-500 bg-zinc-800"
-                    : "border-zinc-700 focus:border-zinc-500"
-              }`}
-            />
-          ))}
-        </div>
-
+        <Input
+          type="password"
+          value={pin}
+          onChange={(e) => { setPin(e.target.value); setError(false) }}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          placeholder="Zadejte kód"
+          className="h-12 text-center text-lg tracking-widest"
+          autoFocus
+        />
         {error && <p className="text-sm text-red-400">Nesprávný kód</p>}
+        <Button className="w-full h-11" onClick={handleSubmit} disabled={pin.length < 1}>
+          Vstoupit
+        </Button>
       </div>
     </div>
   )
