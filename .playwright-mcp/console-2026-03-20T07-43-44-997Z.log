@@ -1,0 +1,157 @@
+[     165ms] [WARNING] Image with src "/logo.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[  409249ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[  409646ms] [WARNING] Image with src "/logo.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[  586076ms] [ERROR] ./projects/darvis/src/components/survey/step-materials.tsx:91:12
+Expected '</', got ')'
+  89 |               </div>
+  90 |             </div>
+> 91 |           ))}
+     |            ^
+  92 |         </CardContent>
+  93 |       </Card>
+  94 |
+
+Parsing ecmascript source code failed
+
+Generated code of loaders [next/dist/build/babel/loader] transform of file content of projects/darvis/src/components/survey/step-materials.tsx:
+./projects/darvis/src/components/survey/step-materials.tsx:91:12
+  89 |               </div>
+  90 |             </div>
+> 91 |           ))}
+     |            ^
+  92 |         </CardContent>
+  93 |       </Card>
+  94 |
+
+Import traces:
+  Client Component Browser:
+    ./projects/darvis/src/components/survey/step-materials.tsx [Client Component Browser]
+    ./projects/darvis/src/components/survey/survey-content.tsx [Client Component Browser]
+    ./projects/darvis/src/app/survey/page.tsx [Client Component Browser]
+    ./projects/darvis/src/app/survey/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/darvis/src/components/survey/step-materials.tsx [Client Component SSR]
+    ./projects/darvis/src/components/survey/survey-content.tsx [Client Component SSR]
+    ./projects/darvis/src/app/survey/page.tsx [Client Component SSR]
+    ./projects/darvis/src/app/survey/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:3272
+[  607839ms] [ERROR] ./projects/darvis/src/components/survey/step-materials.tsx:91:12
+Expected '</', got ')'
+  89 |               </div>
+  90 |             </div>
+> 91 |           ))}
+     |            ^
+  92 |         </CardContent>
+  93 |       </Card>
+  94 |
+
+Parsing ecmascript source code failed
+
+Generated code of loaders [next/dist/build/babel/loader] transform of file content of projects/darvis/src/components/survey/step-materials.tsx:
+./projects/darvis/src/components/survey/step-materials.tsx:91:12
+  89 |               </div>
+  90 |             </div>
+> 91 |           ))}
+     |            ^
+  92 |         </CardContent>
+  93 |       </Card>
+  94 |
+
+Import traces:
+  Client Component Browser:
+    ./projects/darvis/src/components/survey/step-materials.tsx [Client Component Browser]
+    ./projects/darvis/src/components/survey/survey-content.tsx [Client Component Browser]
+    ./projects/darvis/src/app/survey/page.tsx [Client Component Browser]
+    ./projects/darvis/src/app/survey/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/darvis/src/components/survey/step-materials.tsx [Client Component SSR]
+    ./projects/darvis/src/components/survey/survey-content.tsx [Client Component SSR]
+    ./projects/darvis/src/app/survey/page.tsx [Client Component SSR]
+    ./projects/darvis/src/app/survey/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:3272
+[  607932ms] [ERROR] ./projects/darvis/src/components/survey/step-materials.tsx:91:12
+Expected '</', got ')'
+  89 |               </div>
+  90 |             </div>
+> 91 |           ))}
+     |            ^
+  92 |         </CardContent>
+  93 |       </Card>
+  94 |
+
+Parsing ecmascript source code failed
+
+Generated code of loaders [next/dist/build/babel/loader] transform of file content of projects/darvis/src/components/survey/step-materials.tsx:
+./projects/darvis/src/components/survey/step-materials.tsx:91:12
+  89 |               </div>
+  90 |             </div>
+> 91 |           ))}
+     |            ^
+  92 |         </CardContent>
+  93 |       </Card>
+  94 |
+
+Import traces:
+  Client Component Browser:
+    ./projects/darvis/src/components/survey/step-materials.tsx [Client Component Browser]
+    ./projects/darvis/src/components/survey/survey-content.tsx [Client Component Browser]
+    ./projects/darvis/src/app/survey/page.tsx [Client Component Browser]
+    ./projects/darvis/src/app/survey/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/darvis/src/components/survey/step-materials.tsx [Client Component SSR]
+    ./projects/darvis/src/components/survey/survey-content.tsx [Client Component SSR]
+    ./projects/darvis/src/app/survey/page.tsx [Client Component SSR]
+    ./projects/darvis/src/app/survey/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:3272
+[  759752ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[  759997ms] [WARNING] Image with src "/logo.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[ 1540023ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[ 1540281ms] [WARNING] Image with src "/logo.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[ 1554069ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[ 1554295ms] [WARNING] Image with src "/logo.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[ 1567962ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[ 1568196ms] [WARNING] Image with src "/logo.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
+[ 2043399ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=GeAkYFhyDx-u0p26k9WLA' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_next/static/chunks/03~t_next_dist_client_0ysf~hx._.js:13299
+[ 2044781ms] [WARNING] Image with src "/logo.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:2431
