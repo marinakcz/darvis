@@ -10,7 +10,7 @@ export const JOB_TYPE_LABELS: Record<JobType, string> = {
   international: "Mezinárodní",
 }
 
-export type VehicleId = "small" | "medium" | "large"
+export type VehicleId = "small-15" | "small-20" | "medium-24" | "large-33" | "xlarge-36"
 
 export type RoomType =
   | "bedroom"
@@ -139,7 +139,7 @@ export function createEmptyJob(mode: SurveyMode = "detailed"): Job {
   return {
     mode,
     jobType: "apartment",
-    vehicleId: "medium",
+    vehicleId: "medium-24",
     client: { name: "", phone: "", email: "" },
     pickup: { address: "", floor: 0, elevator: false },
     delivery: { address: "", floor: 0, elevator: false },

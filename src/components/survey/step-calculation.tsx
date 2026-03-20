@@ -11,9 +11,11 @@ import { Truck } from "lucide-react"
 
 /** Auto-select vehicle based on total volume */
 function autoSelectVehicle(totalVolume: number): VehicleId {
-  if (totalVolume <= 15) return "small"
-  if (totalVolume <= 20) return "medium"
-  return "large"
+  if (totalVolume <= 15) return "small-15"
+  if (totalVolume <= 20) return "small-20"
+  if (totalVolume <= 24) return "medium-24"
+  if (totalVolume <= 33) return "large-33"
+  return "xlarge-36"
 }
 
 interface StepCalculationProps {
@@ -42,7 +44,7 @@ export function StepCalculation({ job, onChange, onNext, onBack }: StepCalculati
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-1.5">
             {VEHICLES.map((vehicle) => {
               const isActive = job.vehicleId === vehicle.id
               const isSuggested = suggestedVehicle === vehicle.id
@@ -51,17 +53,28 @@ export function StepCalculation({ job, onChange, onNext, onBack }: StepCalculati
                   key={vehicle.id}
                   type="button"
                   onClick={() => selectVehicle(vehicle.id)}
-                  className={`flex flex-1 flex-col items-center gap-1 rounded-lg border px-2 py-3 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                  className={`flex items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-colors min-h-[44px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     isActive
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:bg-accent"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:bg-accent"
                   }`}
                 >
-                  <span className="text-sm font-medium">{vehicle.name}</span>
-                  <span className="text-xs font-mono">{formatPrice(vehicle.rate)}</span>
-                  {isSuggested && !isActive && (
-                    <span className="text-[10px] text-muted-foreground">doporučeno</span>
-                  )}
+                  <div className="flex flex-col">
+                    <span className={`text-sm font-medium ${isActive ? "text-primary" : ""}`}>
+                      {vehicle.name}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">{vehicle.description}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {formatPrice(vehicle.hourlyRate)}/hod
+                    </span>
+                    {isSuggested && (
+                      <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
+                        tip
+                      </span>
+                    )}
+                  </div>
                 </button>
               )
             })}

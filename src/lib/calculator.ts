@@ -19,10 +19,10 @@ import {
 } from "./constants"
 
 export function calculateJob(job: Job): Calculation {
-  // Resolve selected vehicle (fallback to medium)
-  const vehicle = VEHICLES.find((v) => v.id === job.vehicleId) ?? VEHICLES[1]
+  // Resolve selected vehicle (fallback to medium-24)
+  const vehicle = VEHICLES.find((v) => v.id === job.vehicleId) ?? VEHICLES[2]
   const vehicleCapacity = vehicle.capacity
-  const vehicleRate = vehicle.rate
+  const vehicleHourlyRate = vehicle.hourlyRate
 
   let totalVolume: number
   let servicesCost = 0
@@ -80,8 +80,8 @@ export function calculateJob(job: Job): Calculation {
         packingPaper: truckCount,
       }
 
-  // Cena
-  const trucksCost = truckCount * vehicleRate
+  // Cena — hodinová sazba vozu zahrnuje řidiče, palivo, amortizaci
+  const trucksCost = truckCount * estimatedHours * vehicleHourlyRate
   const laborCost = workerCount * estimatedHours * WORKER_HOURLY_RATE
   const materialsCost =
     materials.boxes * MATERIAL_RATES.box +
