@@ -62,19 +62,59 @@ interface MockJob {
   date: string
   floor: { pickup: number; delivery: number }
   elevator: { pickup: boolean; delivery: boolean }
-  status: string
+  status: "survey" | "approval" | "execution" | "invoicing"
+  statusLabel: string
   price: string
   statusColor: string
   highlight?: boolean
   actionable?: boolean
+  time?: string
+  sentDate?: string
 }
+
+/** Today's date for mock data: 2026-03-20 */
+const TODAY = "2026-03-20"
 
 const MOCK_JOBS: MockJob[] = [
   {
-    id: "dvorak", name: "Dvořák — Karlín → Modřany", client: "Petr Dvořák", phone: "+420 777 123 456",
-    pickup: "Křižíkova 42, Praha 8", delivery: "Levského 3112, Praha 4",
-    distance: 14, date: "2026-03-25", floor: { pickup: 3, delivery: 1 }, elevator: { pickup: false, delivery: true },
-    status: "Čeká na zaměření", price: "—", statusColor: "text-blue-400", highlight: true, actionable: true,
+    id: "dvorak", name: "Dvořák — Karlín \u2192 Mod\u0159any", client: "Petr Dvo\u0159\u00e1k", phone: "+420 777 123 456",
+    pickup: "K\u0159i\u017e\u00edkova 42, Praha 8", delivery: "Levsk\u00e9ho 3112, Praha 4",
+    distance: 14, date: TODAY, floor: { pickup: 3, delivery: 1 }, elevator: { pickup: false, delivery: true },
+    status: "survey", statusLabel: "\u010cek\u00e1 na zam\u011b\u0159en\u00ed", price: "\u2014", statusColor: "text-blue-400",
+    highlight: true, actionable: true, time: "09:00",
+  },
+  {
+    id: "kowalski", name: "Kowalski — Sm\u00edchov \u2192 Dejvice", client: "Anna Kowalski", phone: "+420 608 222 333",
+    pickup: "Stroupežnického 18, Praha 5", delivery: "Jugoslávských partyzánů 3, Praha 6",
+    distance: 8, date: "2026-03-27", floor: { pickup: 2, delivery: 4 }, elevator: { pickup: true, delivery: true },
+    status: "survey", statusLabel: "\u010cek\u00e1 na zam\u011b\u0159en\u00ed", price: "\u2014", statusColor: "text-blue-400",
+    highlight: true, actionable: true,
+  },
+  {
+    id: "svobodova", name: "Svobodov\u00e1 — Vinohrady \u2192 Letňany", client: "Marie Svobodov\u00e1", phone: "+420 731 444 555",
+    pickup: "Korunní 88, Praha 2", delivery: "Tupolevova 710, Praha 9",
+    distance: 18, date: "2026-03-18", floor: { pickup: 1, delivery: 0 }, elevator: { pickup: false, delivery: false },
+    status: "approval", statusLabel: "\u010cek\u00e1 na schv\u00e1len\u00ed", price: "32 100 K\u010d", statusColor: "text-yellow-400",
+    sentDate: "2026-03-17",
+  },
+  {
+    id: "novak", name: "Nov\u00e1k — Žižkov \u2192 Hostiva\u0159", client: "Tom\u00e1\u0161 Nov\u00e1k", phone: "+420 602 888 999",
+    pickup: "Husitská 12, Praha 3", delivery: "Hornoměcholupská 55, Praha 10",
+    distance: 11, date: TODAY, floor: { pickup: 4, delivery: 2 }, elevator: { pickup: true, delivery: false },
+    status: "execution", statusLabel: "Realizace", price: "28 500 K\u010d", statusColor: "text-green-400",
+    time: "14:00",
+  },
+  {
+    id: "krejci", name: "Krej\u010d\u00ed — Břevnov \u2192 Barrandov", client: "Lucie Krej\u010d\u00ed", phone: "+420 775 666 777",
+    pickup: "B\u011blohorsk\u00e1 90, Praha 6", delivery: "Ke Kaménce 4, Praha 5",
+    distance: 9, date: "2026-03-25", floor: { pickup: 2, delivery: 3 }, elevator: { pickup: false, delivery: true },
+    status: "execution", statusLabel: "Realizace", price: "19 800 K\u010d", statusColor: "text-green-400",
+  },
+  {
+    id: "horakova", name: "Hor\u00e1kov\u00e1 — Nusle \u2192 Vršovice", client: "Jana Hor\u00e1kov\u00e1", phone: "+420 720 111 222",
+    pickup: "Táborská 30, Praha 4", delivery: "Kodaňská 12, Praha 10",
+    distance: 5, date: "2026-03-15", floor: { pickup: 0, delivery: 1 }, elevator: { pickup: false, delivery: false },
+    status: "invoicing", statusLabel: "K fakturaci", price: "15 200 K\u010d", statusColor: "text-purple-400",
   },
 ]
 
@@ -212,7 +252,7 @@ function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
   const [crmExpanded, setCrmExpanded] = useState(false)
   const { navAddress, openNav, closeNav } = useNavigationSheet()
 
-  const statusBg = selectedJob.statusColor === "text-blue-400" ? "bg-blue-400/15 text-blue-400" : selectedJob.statusColor === "text-green-400" ? "bg-green-400/15 text-green-400" : "bg-yellow-400/15 text-yellow-400"
+  const statusBg = selectedJob.statusColor === "text-blue-400" ? "bg-blue-400/15 text-blue-400" : selectedJob.statusColor === "text-green-400" ? "bg-green-400/15 text-green-400" : selectedJob.statusColor === "text-purple-400" ? "bg-purple-400/15 text-purple-400" : "bg-yellow-400/15 text-yellow-400"
 
   return (
     <div className="flex flex-1 flex-col ios-slide-in">
@@ -225,14 +265,14 @@ function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
             <span className="text-sm font-semibold truncate">{selectedJob.client}</span>
             <span className="text-[11px] text-muted-foreground truncate">{selectedJob.name.split(" — ")[1]}</span>
           </div>
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${statusBg}`}>{selectedJob.status}</span>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${statusBg}`}>{selectedJob.statusLabel}</span>
         </div>
       </header>
       <main className="flex flex-1 flex-col gap-4 px-4 py-4">
         {/* Status badge + date */}
         <div className="flex items-center justify-between">
           <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold ${statusBg}`}>
-            {selectedJob.status}
+            {selectedJob.statusLabel}
           </span>
           <span className="text-sm text-muted-foreground">{dateFormatted}</span>
         </div>
@@ -334,10 +374,43 @@ function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
   )
 }
 
+/** Single job row used across dashboard sections */
+function JobRow({ job, onClick, children }: { job: MockJob; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-3 px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <div className="flex-1 min-w-0">{children}</div>
+      <ChevronRight className="size-4 text-muted-foreground/50 shrink-0" />
+    </button>
+  )
+}
+
+/** Section header — uppercase small grey label */
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return <p className="text-xs text-muted-foreground uppercase tracking-wider px-1 pt-4 pb-1">{children}</p>
+}
+
+/** Grouped card container with divide-y */
+function SectionCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
+      {children}
+    </div>
+  )
+}
+
 /** Dashboard with mock jobs */
 function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (mode: SurveyMode) => void; onLoadJob: (mockJob: MockJob, mode: SurveyMode) => void; showModePicker?: boolean }) {
   const [view, setView] = useState<"list" | "mode-picker" | "detail">(showModePicker ? "mode-picker" : "list")
   const [selectedJob, setSelectedJob] = useState<MockJob | null>(null)
+
+  const openDetail = useCallback((job: MockJob) => {
+    setSelectedJob(job)
+    setView("detail")
+  }, [])
 
   if (view === "mode-picker") {
     return (
@@ -388,41 +461,153 @@ function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (m
     )
   }
 
+  // Derive phase groups
+  const todayJobs = MOCK_JOBS.filter((j) => j.date === TODAY)
+  const surveyJobs = MOCK_JOBS.filter((j) => j.status === "survey")
+  const approvalJobs = MOCK_JOBS.filter((j) => j.status === "approval")
+  const executionJobs = MOCK_JOBS.filter((j) => j.status === "execution")
+  const invoicingJobs = MOCK_JOBS.filter((j) => j.status === "invoicing")
+
   return (
     <div className="flex flex-1 flex-col ios-fade-in">
-      <header className="bg-background px-4 pt-4 pb-2">
+      {/* iOS large title header */}
+      <header className="bg-background px-4 pt-4 pb-3">
+        <p className="text-[11px] text-muted-foreground uppercase tracking-wider pb-1">Darvis</p>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Zakázky</h1>
-          <span className="text-xs text-muted-foreground font-mono">Jan T.</span>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold tracking-tight">Dobrý den, Jan</h1>
+            <p className="text-sm text-muted-foreground">
+              Dnes máte {todayJobs.length} {todayJobs.length === 1 ? "zakázku" : todayJobs.length >= 2 && todayJobs.length <= 4 ? "zakázky" : "zakázek"}
+            </p>
+          </div>
+          <div className="flex items-center justify-center size-10 rounded-full bg-primary/10 text-primary text-sm font-semibold shrink-0">
+            JT
+          </div>
         </div>
       </header>
-      <main className="flex flex-1 flex-col gap-3 px-4 py-4">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Aktivní zakázky</p>
-        <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
-          {MOCK_JOBS.map((job) => (
-            <button
-              key={job.id}
-              type="button"
-              onClick={() => { setSelectedJob(job); setView("detail") }}
-              className="flex items-center gap-3 px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-sm font-medium truncate">{job.name}</span>
-                  <span className="font-mono text-xs text-muted-foreground shrink-0">{new Date(job.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric" })}</span>
-                </div>
-                <div className="flex items-center justify-between pt-1">
-                  <span className={`text-xs font-medium ${job.statusColor}`}>{job.status}</span>
-                  <span className="font-mono text-sm">{job.price}</span>
-                </div>
-              </div>
-              <ChevronRight className="size-4 text-muted-foreground/50 shrink-0" />
-            </button>
-          ))}
+
+      <main className="flex flex-1 flex-col gap-1 px-4 pb-4 overflow-y-auto">
+        {/* Quick stats row */}
+        <div className="flex items-center gap-2 py-2 overflow-x-auto">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-400/10 text-blue-400 px-3 py-1.5 text-xs font-medium whitespace-nowrap">
+            <MapPin className="size-3" />
+            K zaměření: {surveyJobs.length}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-400/10 text-yellow-400 px-3 py-1.5 text-xs font-medium whitespace-nowrap">
+            <Clock className="size-3" />
+            Schválení: {approvalJobs.length}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-400/10 text-green-400 px-3 py-1.5 text-xs font-medium whitespace-nowrap">
+            <Zap className="size-3" />
+            Realizace: {executionJobs.length}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-400/10 text-purple-400 px-3 py-1.5 text-xs font-medium whitespace-nowrap">
+            <FileText className="size-3" />
+            Fakturace: {invoicingJobs.length}
+          </span>
         </div>
-        <Button size="lg" className="h-14 text-base mt-2 rounded-2xl" onClick={() => setView("mode-picker")}>
-          + Nová zakázka
-        </Button>
+
+        {/* Section: Dnes */}
+        <SectionHeader>Dnes</SectionHeader>
+        {todayJobs.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-card px-4 py-6 text-center">
+            <p className="text-sm text-muted-foreground">Dnes nemáte žádné zakázky.</p>
+          </div>
+        ) : (
+          <SectionCard>
+            {todayJobs.map((job) => {
+              const borderColor = job.status === "survey" ? "border-l-blue-400" : job.status === "execution" ? "border-l-green-400" : "border-l-yellow-400"
+              return (
+                <div key={job.id} className={`border-l-[3px] ${borderColor}`}>
+                  <JobRow job={job} onClick={() => openDetail(job)}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium truncate">{job.client}</span>
+                      <span className="text-xs font-mono text-muted-foreground shrink-0">{job.time}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-0.5">
+                      <span className="text-xs text-muted-foreground truncate">{job.pickup.split(",")[0]}</span>
+                      <span className={`text-[11px] font-medium ${job.statusColor}`}>{job.statusLabel}</span>
+                    </div>
+                  </JobRow>
+                </div>
+              )
+            })}
+          </SectionCard>
+        )}
+
+        {/* Section: K zaměření */}
+        <SectionHeader>K zaměření</SectionHeader>
+        <SectionCard>
+          {surveyJobs.map((job) => {
+            const dateFormatted = new Date(job.date).toLocaleDateString("cs-CZ", { weekday: "short", day: "numeric", month: "numeric" })
+            return (
+              <div key={job.id} className="border-l-[3px] border-l-blue-400">
+                <JobRow job={job} onClick={() => openDetail(job)}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium truncate">{job.client}</span>
+                    <span className="text-xs font-mono text-muted-foreground shrink-0">{dateFormatted}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground truncate block pt-0.5">{job.pickup.split(",")[0]}</span>
+                </JobRow>
+              </div>
+            )
+          })}
+        </SectionCard>
+
+        {/* Section: Čeká na schválení */}
+        {approvalJobs.length > 0 && (
+          <>
+            <SectionHeader>Čeká na schválení</SectionHeader>
+            <SectionCard>
+              {approvalJobs.map((job) => {
+                const sentFormatted = job.sentDate
+                  ? new Date(job.sentDate).toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric" })
+                  : ""
+                return (
+                  <div key={job.id} className="border-l-[3px] border-l-yellow-400">
+                    <JobRow job={job} onClick={() => openDetail(job)}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium truncate">{job.client}</span>
+                        <span className="text-sm font-mono shrink-0">{job.price}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground block pt-0.5">Odesláno {sentFormatted}</span>
+                    </JobRow>
+                  </div>
+                )
+              })}
+            </SectionCard>
+          </>
+        )}
+
+        {/* Section: Nadcházející realizace */}
+        {executionJobs.length > 0 && (
+          <>
+            <SectionHeader>Nadcházející realizace</SectionHeader>
+            <SectionCard>
+              {executionJobs.map((job) => {
+                const dateFormatted = new Date(job.date).toLocaleDateString("cs-CZ", { weekday: "short", day: "numeric", month: "numeric" })
+                return (
+                  <div key={job.id} className="border-l-[3px] border-l-green-400">
+                    <JobRow job={job} onClick={() => openDetail(job)}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium truncate">{job.client}</span>
+                        <span className="text-xs font-mono text-muted-foreground shrink-0">{dateFormatted}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground truncate block pt-0.5">{job.pickup.split(",")[0]}</span>
+                    </JobRow>
+                  </div>
+                )
+              })}
+            </SectionCard>
+          </>
+        )}
+
+        {/* New job button */}
+        <div className="pt-4">
+          <Button size="lg" className="h-14 text-base w-full rounded-2xl" onClick={() => setView("mode-picker")}>
+            + Nová zakázka
+          </Button>
+        </div>
       </main>
     </div>
   )
