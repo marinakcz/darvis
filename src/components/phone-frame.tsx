@@ -9,7 +9,7 @@ import { MessageSquarePlus, MessageSquareOff } from "lucide-react"
 
 const PHONE_W = 375
 const PHONE_H = 812
-const BEZEL = 26
+const BEZEL = 8
 const TOTAL_W = PHONE_W + BEZEL
 const TOTAL_H = PHONE_H + BEZEL
 const TOP_BAR_H = 56
@@ -195,19 +195,14 @@ export function PhoneFrame({ children, tabBar }: { children: React.ReactNode; ta
               className="relative origin-top-left"
               style={{ transform: `scale(${scale})` }}
             >
-              {/* Phone body */}
+              {/* Phone body — simple rounded rectangle */}
               <div
-                className="relative rounded-[52px] border-[3px] border-zinc-600 bg-zinc-900 p-[10px] shadow-[0_0_100px_rgba(255,255,255,0.03),0_0_40px_rgba(0,0,0,0.8)]"
+                className="relative rounded-[24px] border-[2px] border-zinc-700 bg-background shadow-[0_0_80px_rgba(0,0,0,0.6)]"
                 style={{ width: PHONE_W, height: PHONE_H }}
               >
-                <div className="relative h-full w-full overflow-hidden rounded-[42px] bg-background">
-                  {/* Dynamic Island */}
-                  <div className="absolute left-1/2 top-[10px] z-50 h-[33px] w-[120px] -translate-x-1/2 rounded-full bg-black" />
-                  {/* Home indicator */}
-                  <div className="absolute bottom-[6px] left-1/2 z-50 h-[5px] w-[130px] -translate-x-1/2 rounded-full bg-zinc-600" />
-
-                  {/* Screen — flex column: scrollable content + fixed tab bar */}
-                  <div className="flex h-full flex-col pt-[12px] pb-[20px]">
+                <div className="relative h-full w-full overflow-hidden rounded-[22px]">
+                  {/* Screen */}
+                  <div className="flex h-full flex-col">
                     <div
                       ref={contentRef}
                       className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden relative"
@@ -225,11 +220,6 @@ export function PhoneFrame({ children, tabBar }: { children: React.ReactNode; ta
                   </div>
                 </div>
 
-              {/* Side buttons */}
-              <div className="absolute -left-[5px] top-[155px] h-[28px] w-[4px] rounded-l-sm bg-zinc-600" />
-              <div className="absolute -left-[5px] top-[200px] h-[52px] w-[4px] rounded-l-sm bg-zinc-600" />
-              <div className="absolute -left-[5px] top-[264px] h-[52px] w-[4px] rounded-l-sm bg-zinc-600" />
-              <div className="absolute -right-[5px] top-[220px] h-[76px] w-[4px] rounded-r-sm bg-zinc-600" />
               </div>
             </div>
           </div>

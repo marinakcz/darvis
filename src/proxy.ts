@@ -36,7 +36,9 @@ export default function proxy(request: NextRequest) {
     pathname.startsWith("/favicon") ||
     pathname.endsWith(".svg") ||
     pathname.endsWith(".png") ||
-    pathname.endsWith(".ico")
+    pathname.endsWith(".ico") ||
+    pathname.endsWith(".json") ||
+    pathname.endsWith(".webmanifest")
   ) {
     return NextResponse.next()
   }

@@ -340,7 +340,7 @@ function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (m
           <span className="text-xs text-muted-foreground font-mono">Jan T.</span>
         </div>
       </header>
-      <main className="flex flex-1 flex-col gap-3 px-4 py-4 pull-indicator">
+      <main className="flex flex-1 flex-col gap-3 px-4 py-4">
         <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Aktivní zakázky</p>
         <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
           {MOCK_JOBS.map((job) => (
