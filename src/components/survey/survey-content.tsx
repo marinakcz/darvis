@@ -632,9 +632,7 @@ const DETAILED_STEPS = [
 ]
 
 /** Derive the active tab from the step number */
-function getActiveTab(step: number): "jobs" | "calendar" | "new" | "profile" {
-  if (step === -2) return "calendar"
-  if (step === -3) return "profile"
+function getActiveTab(step: number): "jobs" | "new" {
   if (step === -4) return "new"
   return "jobs"
 }
@@ -691,11 +689,9 @@ export default function SurveyContent() {
     goTo(1)
   }, [setJob, goTo])
 
-  const handleTabNavigate = useCallback((tab: "jobs" | "calendar" | "new" | "profile") => {
+  const handleTabNavigate = useCallback((tab: "jobs" | "new") => {
     if (tab === "jobs") goTo(-1)
-    else if (tab === "calendar") goTo(-2)
     else if (tab === "new") goTo(-4)
-    else if (tab === "profile") goTo(-3)
   }, [goTo])
 
   const handleLogout = useCallback(() => {

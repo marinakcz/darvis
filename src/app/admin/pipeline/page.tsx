@@ -10,7 +10,14 @@ import {
 } from "lucide-react"
 import type { ComponentType } from "react"
 import type { LucideProps } from "lucide-react"
-import type { ReleaseNote } from "@/lib/release-notes"
+interface ReleaseNote {
+  id: string
+  version: string
+  date: string
+  title: string
+  description: string
+  type: "feature" | "fix" | "change"
+}
 
 /* ── Pipeline types (matching dev-log.tsx) ── */
 

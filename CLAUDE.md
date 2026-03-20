@@ -22,13 +22,22 @@ AI job assistant pro servisní firmy — řízení zakázek od obhlídky po zapl
 - Vývoj lokálně (`next dev`), deploy na Vercel jen pro sdílení s klientem
 - GitHub: marinakcz/darvis
 
-## Fáze 1 — MVP scope
+## Roadmapa
 
-Digitalizace papírového kalkulačního flow Stěhování Praha:
+Sekvenční bloky — jeden fokus, dokončit, pak dál. Viz `~/ai-studio/notes/AI-studio/01-projects/darvis/ideace/Roadmapa.md`
 
-1. **On-site zaměření** — obchodník u klienta kliká místnosti, položky, objem
-2. **Kalkulace** — automatický výpočet (m³ → auta, položky → práce, materiál → náklady)
-3. **Nabídka** — vygenerovaná nabídka pro klienta (PDF nebo odkaz)
+### Hotovo: Validační prototyp (v0.1.x)
+Wizard, katalog, kalkulace, nabídka, feedback, admin, mobilní UI. Vše na mock datech.
+
+### Teď: Blok 1 — Zaměření a nabídka (end-to-end)
+- Databáze (zakázky, klienti, nabídky) — pryč z mock dat
+- Wizard ukládá zaměření do DB
+- Nabídka se generuje z reálných dat a jde sdílet (odkaz)
+- Klient vidí nabídku (read-only, bez přihlášení)
+- PDF export nabídky
+
+### Potom: Blok 2 — Schválení a pipeline
+### Později: Blok 3 — Realizace, Blok 4 — Validace a fakturace, Blok 5 — AI
 
 Referenční dokument: `~/ai-studio/notes/AI-studio/01-projects/darvis/ideace/Manuální kalkulace.md`
 
