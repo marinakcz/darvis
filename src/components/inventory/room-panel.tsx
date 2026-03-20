@@ -81,7 +81,7 @@ export function RoomPanel({ room, onUpdate, onRemove }: RoomPanelProps) {
           <Badge variant="secondary" className="font-mono text-xs">
             {totalVolume.toFixed(1)} m³
           </Badge>
-          <Button variant="ghost" size="icon-sm" className="text-muted-foreground" onClick={onRemove}>
+          <Button variant="ghost" size="icon-sm" className="text-muted-foreground" onClick={onRemove} aria-label={`Odebrat ${ROOM_LABELS[room.type]}`}>
             <X className="size-4" />
           </Button>
         </div>

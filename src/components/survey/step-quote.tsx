@@ -141,17 +141,19 @@ export function StepQuote({ job, onBack, onNewJob }: StepQuoteProps) {
       </p>
 
       {/* Actions */}
-      <div className="flex flex-col gap-3 pt-2">
-        <Button size="lg" className="h-14 text-base" onClick={handleShare}>
-          Sdílet nabídku
-        </Button>
-        <div className="flex gap-3">
-          <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
-            ← Zpět
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
+        <div className="flex flex-col gap-3">
+          <Button size="lg" className="h-14 text-base" onClick={handleShare}>
+            Sdílet nabídku
           </Button>
-          <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onNewJob}>
-            Nová zakázka
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
+              ← Zpět
+            </Button>
+            <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onNewJob}>
+              Nová zakázka
+            </Button>
+          </div>
         </div>
       </div>
     </div>

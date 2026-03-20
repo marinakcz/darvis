@@ -23,11 +23,11 @@ export interface FeedbackEntry {
 export type PublicFeedbackEntry = Omit<FeedbackEntry, "note" | "resolution" | "status">
 
 export const FEEDBACK_TYPES: Record<FeedbackType, { label: string; description: string; placeholder: string }> = {
-  want: { label: "Chci tohle", description: "Funkce nebo chování, které potřebuji", placeholder: "Popište co byste chtěli, aby aplikace uměla…" },
-  change: { label: "Změnit", description: "Něco bych udělal jinak", placeholder: "Co byste změnili a jak by to mělo fungovat…" },
-  confusing: { label: "Nechápu", description: "Něco nedává smysl", placeholder: "Co vám přišlo matoucí nebo neintuitivní…" },
-  missing: { label: "Chybí mi", description: "Chybí položka, místnost, funkce", placeholder: "Co v aplikaci postrádáte…" },
-  love: { label: "Líbí se", description: "Tohle je super, zachovejte", placeholder: "Co se vám líbí a chcete zachovat…" },
+  want: { label: "Chci tohle", description: "Funkce nebo chování, které potřebuji", placeholder: "Popište, co byste chtěli, aby aplikace uměla\u2026" },
+  change: { label: "Změnit", description: "Něco bych udělal/a jinak", placeholder: "Co byste změnili a jak by to mělo fungovat\u2026" },
+  confusing: { label: "Nechápu", description: "Něco nedává smysl", placeholder: "Co vám přišlo matoucí nebo neintuitivní\u2026" },
+  missing: { label: "Chybí mi", description: "Chybí položka, místnost nebo funkce", placeholder: "Co v aplikaci postrádáte\u2026" },
+  love: { label: "Líbí se", description: "Tohle je super, zachovejte to", placeholder: "Co se vám líbí a chcete zachovat\u2026" },
 }
 
 /** Submit general feedback (fire-and-forget) */

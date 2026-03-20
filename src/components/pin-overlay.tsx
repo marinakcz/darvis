@@ -187,7 +187,7 @@ export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate 
             <div className="rounded-xl border border-zinc-700 bg-zinc-900 p-4 shadow-2xl">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-zinc-200">Komentář</span>
-                <button onClick={() => setNewPin(null)} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                <button type="button" onClick={() => setNewPin(null)} aria-label="Zrušit komentář" className="text-zinc-500 hover:text-zinc-300 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">
                   <X className="size-3.5" />
                 </button>
               </div>
@@ -196,6 +196,7 @@ export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate 
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
                 placeholder="Jméno (volitelné)"
+                aria-label="Jméno autora"
                 className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none mb-2"
                 onClick={(e) => e.stopPropagation()}
               />
@@ -205,6 +206,7 @@ export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate 
                 placeholder="Co tu chcete změnit?"
                 rows={3}
                 autoFocus
+                aria-label="Text komentáře"
                 className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
                 onClick={(e) => e.stopPropagation()}
               />
@@ -226,8 +228,10 @@ export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate 
       {pins.length > 0 && (
         <div className="absolute top-2 right-2 z-40 flex items-center gap-1">
           <button
+            type="button"
             onClick={(e) => { e.stopPropagation(); setShowResolved(!showResolved) }}
-            className="flex items-center gap-1 rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] text-zinc-400 backdrop-blur"
+            aria-label={showResolved ? "Skrýt vyřešené komentáře" : "Zobrazit vyřešené komentáře"}
+            className="flex items-center gap-1 rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] text-zinc-400 backdrop-blur focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             {showResolved ? <EyeOff className="size-2.5" /> : <Eye className="size-2.5" />}
             {pins.filter((p) => !("status" in p && p.status === "done")).length}
@@ -239,8 +243,9 @@ export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate 
       {active && onDeactivate && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 lg:hidden">
           <button
+            type="button"
             onClick={onDeactivate}
-            className="flex items-center gap-1.5 rounded-full border border-blue-500/50 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-400 backdrop-blur shadow-lg"
+            className="flex items-center gap-1.5 rounded-full border border-blue-500/50 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-400 backdrop-blur shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <X className="size-3.5" />
             Ukončit komentování

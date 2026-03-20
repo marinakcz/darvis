@@ -64,19 +64,34 @@ export function StepQuickRooms({ job, onChange, onNext, onBack }: StepQuickRooms
               {totalPercent}% → {totalVolume.toFixed(1)} m³ → {truckCount} auto{truckCount > 1 ? "a" : ""}
             </span>
           </div>
-          <div className="h-3 rounded-full bg-muted overflow-hidden">
+          <div className="h-3 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={totalPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Zaplnění auta">
             <div
               className={`h-full rounded-full transition-all ${totalPercent > 100 ? "bg-amber-500" : "bg-emerald-500"}`}
               style={{ width: `${Math.min(totalPercent, 100)}%` }}
             />
           </div>
           {totalPercent > 100 && (
-            <p className="text-xs text-amber-400 mt-1">
-              Přesah → {truckCount} auta potřeba
+            <p role="alert" className="text-xs text-amber-400 mt-1">
+              Objem přesahuje jedno auto — budou potřeba {truckCount} auta.
             </p>
           )}
         </CardContent>
       </Card>
+
+      {/* Empty state */}
+      {job.quickRooms.length === 0 && !showPicker && (
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
+          <p className="text-lg text-muted-foreground">
+            Zatím nemáte žádné místnosti.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Přidejte místnosti a odhadněte, kolik procent auta každá zabere.
+          </p>
+          <Button size="lg" className="h-14 text-base" onClick={() => setShowPicker(true)}>
+            + Přidat místnost
+          </Button>
+        </div>
+      )}
 
       {/* Rooms */}
       {job.quickRooms.map((room) => (
@@ -94,20 +109,22 @@ export function StepQuickRooms({ job, onChange, onNext, onBack }: StepQuickRooms
                 <button
                   type="button"
                   onClick={() => removeRoom(room.id)}
-                  className="text-muted-foreground hover:text-foreground"
+                  aria-label={`Odebrat ${ROOM_LABELS[room.type]}`}
+                  className="flex items-center justify-center h-11 w-11 text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded"
                 >
                   <X className="size-4" />
                 </button>
               </div>
             </div>
             {/* Percent chips */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Zaplnění pro ${ROOM_LABELS[room.type]}`}>
               {PERCENT_STEPS.map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => updatePercent(room.id, p)}
-                  className={`rounded-lg px-3 py-2 text-sm font-mono font-medium transition-colors ${
+                  aria-pressed={room.percent === p}
+                  className={`h-11 rounded-lg px-3 py-2 text-sm font-mono font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     room.percent === p
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-accent"
@@ -136,18 +153,20 @@ export function StepQuickRooms({ job, onChange, onNext, onBack }: StepQuickRooms
       )}
 
       {/* Nav */}
-      <div className="flex gap-3 pt-4">
-        <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
-          ← Zpět
-        </Button>
-        <Button
-          size="lg"
-          className="h-14 flex-1 text-base"
-          onClick={onNext}
-          disabled={job.quickRooms.length === 0}
-        >
-          Materiál →
-        </Button>
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
+        <div className="flex gap-3">
+          <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
+            ← Zpět
+          </Button>
+          <Button
+            size="lg"
+            className="h-14 flex-1 text-base"
+            onClick={onNext}
+            disabled={job.quickRooms.length === 0}
+          >
+            Pokračovat na materiál →
+          </Button>
+        </div>
       </div>
     </div>
   )

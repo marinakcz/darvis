@@ -46,19 +46,21 @@ export function ItemRow({ item, onUpdate, onRemove }: ItemRowProps) {
           <Button
             variant="outline"
             size="sm"
-            className="h-9 w-9 p-0 text-lg"
+            className="h-11 w-11 p-0 text-lg"
             onClick={() => setQuantity(-1)}
+            aria-label={`Ubrat ${catalog.name}`}
           >
             −
           </Button>
-          <span className="w-8 text-center font-mono text-sm font-medium">
+          <span className="w-8 text-center font-mono text-sm font-medium" aria-live="polite" aria-label={`${catalog.name}: ${item.quantity} kusů`}>
             {item.quantity}
           </span>
           <Button
             variant="outline"
             size="sm"
-            className="h-9 w-9 p-0 text-lg"
+            className="h-11 w-11 p-0 text-lg"
             onClick={() => setQuantity(1)}
+            aria-label={`Přidat ${catalog.name}`}
           >
             +
           </Button>

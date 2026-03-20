@@ -78,9 +78,9 @@ export function FeedbackButton() {
       {/* Modal overlay */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={reset} />
-          <div className="relative w-full max-w-[400px] rounded-2xl bg-zinc-900 border border-zinc-800 p-5 shadow-2xl">
-            <button type="button" onClick={reset} className="absolute right-4 top-4 text-zinc-500 hover:text-zinc-300">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={reset} role="presentation" />
+          <div role="dialog" aria-label="Zpětná vazba" className="relative w-full max-w-[400px] rounded-2xl bg-zinc-900 border border-zinc-800 p-5 shadow-2xl">
+            <button type="button" onClick={reset} aria-label="Zavřít" className="absolute right-4 top-4 text-zinc-500 hover:text-zinc-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">
               <X className="size-5" />
             </button>
 
@@ -126,7 +126,7 @@ export function FeedbackButton() {
             {step === "form" && type && (
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => setStep("type")} className="text-zinc-500 hover:text-zinc-300">
+                  <button type="button" onClick={() => setStep("type")} aria-label="Zpět na výběr typu" className="text-zinc-500 hover:text-zinc-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">
                     <ArrowLeft className="size-4" />
                   </button>
                   <span className="inline-flex items-center gap-1.5 rounded-md bg-zinc-800 px-2.5 py-1 text-sm">
@@ -142,6 +142,7 @@ export function FeedbackButton() {
                   rows={4}
                   maxLength={2000}
                   autoFocus
+                  aria-label="Vaše zpětná vazba"
                   className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:outline-none"
                 />
 
@@ -161,8 +162,8 @@ export function FeedbackButton() {
             {step === "done" && (
               <div className="flex flex-col items-center gap-3 py-6">
                 <Check className="size-8 text-emerald-400" />
-                <p className="text-sm font-medium text-zinc-200">Díky za zpětnou vazbu!</p>
-                <p className="text-xs text-zinc-500">Budeme se tím zabývat.</p>
+                <p className="text-sm font-medium text-zinc-200">Děkujeme za zpětnou vazbu!</p>
+                <p className="text-xs text-zinc-500">Vaše připomínka nám pomůže aplikaci vylepšit.</p>
               </div>
             )}
           </div>

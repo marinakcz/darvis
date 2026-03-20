@@ -70,19 +70,21 @@ export function StepMaterials({ job, onChange, onNext, onBack }: StepMaterialsPr
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 w-9 p-0 text-lg"
+                  className="h-11 w-11 p-0 text-lg"
                   onClick={() => updateMaterial(key, -1)}
+                  aria-label={`Ubrat ${MATERIAL_LABELS[key]}`}
                 >
                   −
                 </Button>
-                <span className="w-10 text-center font-mono text-sm font-medium">
+                <span className="w-10 text-center font-mono text-sm font-medium" aria-live="polite" aria-label={`${MATERIAL_LABELS[key]}: ${job.materials[key]} ${MATERIAL_UNITS[key]}`}>
                   {job.materials[key]}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 w-9 p-0 text-lg"
+                  className="h-11 w-11 p-0 text-lg"
                   onClick={() => updateMaterial(key, 1)}
+                  aria-label={`Přidat ${MATERIAL_LABELS[key]}`}
                 >
                   +
                 </Button>
@@ -94,16 +96,18 @@ export function StepMaterials({ job, onChange, onNext, onBack }: StepMaterialsPr
       </Card>
 
       <p className="text-xs text-muted-foreground text-center">
-        Nechte na 0 pro automatický odhad.
+        Ponechte na 0, pokud chcete automatický odhad.
       </p>
 
-      <div className="flex gap-3 pt-2">
-        <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
-          ← Zpět
-        </Button>
-        <Button size="lg" className="h-14 flex-1 text-base" onClick={onNext}>
-          Kalkulace →
-        </Button>
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
+        <div className="flex gap-3">
+          <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
+            ← Zpět
+          </Button>
+          <Button size="lg" className="h-14 flex-1 text-base" onClick={onNext}>
+            Spočítat kalkulaci →
+          </Button>
+        </div>
       </div>
     </div>
   )

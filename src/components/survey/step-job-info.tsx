@@ -34,10 +34,10 @@ export function StepJobInfo({ job, onChange, onNext }: StepJobInfoProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Klient */}
+      <section aria-labelledby="section-client">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Klient</CardTitle>
+          <CardTitle id="section-client" className="text-base">Klient</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <FieldRow label="Jméno">
@@ -65,6 +65,7 @@ export function StepJobInfo({ job, onChange, onNext }: StepJobInfoProps) {
           </FieldRow>
         </CardContent>
       </Card>
+      </section>
 
       {/* Nakládka */}
       <LocationCard
@@ -107,19 +108,21 @@ export function StepJobInfo({ job, onChange, onNext }: StepJobInfoProps) {
         </CardContent>
       </Card>
 
-      <Button size="lg" className="h-14 text-base" onClick={onNext}>
-        Pokračovat na inventář →
-      </Button>
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
+        <Button size="lg" className="h-14 w-full text-base" onClick={onNext}>
+          Pokračovat na inventář →
+        </Button>
+      </div>
     </div>
   )
 }
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label className="text-sm text-muted-foreground">{label}</Label>
+    <label className="flex flex-col gap-1.5">
+      <span className="text-sm text-muted-foreground">{label}</span>
       {children}
-    </div>
+    </label>
   )
 }
 
@@ -161,10 +164,12 @@ function LocationCard({
           </div>
           <div className="flex items-end gap-2 pb-0.5">
             <Switch
+              id={`elevator-${title}`}
               checked={location.elevator}
               onCheckedChange={(checked) => onChange("elevator", checked)}
+              aria-label="Výtah"
             />
-            <Label className="text-sm">Výtah</Label>
+            <Label htmlFor={`elevator-${title}`} className="text-sm">Výtah</Label>
           </div>
         </div>
       </CardContent>

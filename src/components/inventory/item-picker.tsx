@@ -33,7 +33,7 @@ export function ItemPicker({ onSelect, onClose }: ItemPickerProps) {
     <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Vyberte položku</span>
-        <Button variant="ghost" size="icon-sm" onClick={onClose}>
+        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Zavřít výběr položky">
           <X className="size-4" />
         </Button>
       </div>
@@ -43,14 +43,17 @@ export function ItemPicker({ onSelect, onClose }: ItemPickerProps) {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="h-9"
+        aria-label="Hledat položku"
       />
 
       {/* Category tabs */}
-      <div className="flex gap-1">
+      <div className="flex gap-1" role="tablist" aria-label="Kategorie položek">
         <button
           type="button"
+          role="tab"
+          aria-selected={activeCategory === null}
           onClick={() => setActiveCategory(null)}
-          className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+          className={`h-9 rounded px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
             activeCategory === null ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
           }`}
         >
@@ -62,8 +65,10 @@ export function ItemPicker({ onSelect, onClose }: ItemPickerProps) {
             <button
               key={cat}
               type="button"
+              role="tab"
+              aria-selected={activeCategory === cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1 h-9 rounded px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 activeCategory === cat ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
               }`}
             >
@@ -82,7 +87,7 @@ export function ItemPicker({ onSelect, onClose }: ItemPickerProps) {
               key={item.id}
               type="button"
               onClick={() => onSelect(item.id)}
-              className="flex flex-col items-start rounded-md border border-border p-2 text-left text-xs transition-colors hover:bg-accent active:bg-accent"
+              className="flex flex-col items-start rounded-md border border-border p-2 min-h-[44px] text-left text-xs transition-colors hover:bg-accent active:bg-accent"
             >
               <span className="font-medium">{item.name}</span>
               <span className="font-mono text-muted-foreground">

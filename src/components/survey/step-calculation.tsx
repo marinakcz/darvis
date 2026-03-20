@@ -90,8 +90,8 @@ export function StepCalculation({ job, onNext, onBack }: StepCalculationProps) {
                   <span className="text-muted-foreground">
                     {" — "}
                     {room.items.length === 0
-                      ? "prázdná"
-                      : `${room.items.reduce((sum, i) => sum + i.quantity, 0)} položek`}
+                      ? "zatím bez položek"
+                      : `${room.items.reduce((sum, i) => sum + i.quantity, 0)} pol.`}
                   </span>
                 </div>
               ))}
@@ -99,13 +99,15 @@ export function StepCalculation({ job, onNext, onBack }: StepCalculationProps) {
       </Card>
 
       {/* Navigation */}
-      <div className="flex gap-3 pt-2">
-        <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
-          ← Zpět
-        </Button>
-        <Button size="lg" className="h-14 flex-1 text-base" onClick={onNext}>
-          Nabídka →
-        </Button>
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
+        <div className="flex gap-3">
+          <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
+            ← Zpět
+          </Button>
+          <Button size="lg" className="h-14 flex-1 text-base" onClick={onNext}>
+            Vygenerovat nabídku →
+          </Button>
+        </div>
       </div>
     </div>
   )

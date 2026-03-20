@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import {
   Sheet,
@@ -16,56 +15,9 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip"
 import { DevLog } from "@/components/dev-log"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { ListChecks, Lock, ShieldCheck, FileText, Sparkles, Bug, RefreshCw } from "lucide-react"
+import { ListChecks, ShieldCheck, FileText, Sparkles, Bug, RefreshCw } from "lucide-react"
 import { RELEASE_NOTES, type ReleaseNote } from "@/lib/release-notes"
 
-function AdminPinModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [pin, setPin] = useState("")
-  const [error, setError] = useState(false)
-
-  function handleSubmit() {
-    if (pin.length < 1) return
-    fetch("/api/admin/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin }),
-    }).then((res) => {
-      if (res.ok) {
-        window.location.href = "/admin/feedback"
-      } else {
-        setError(true)
-        setPin("")
-      }
-    })
-  }
-
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex flex-col items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-2xl w-72">
-        <Lock className="size-6 text-zinc-500" />
-        <h2 className="text-base font-semibold text-zinc-200">Admin</h2>
-        <Input
-          type="password"
-          value={pin}
-          onChange={(e) => { setPin(e.target.value); setError(false) }}
-          onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onClose() }}
-          placeholder="Kód"
-          className="h-11 text-center text-lg tracking-widest"
-          autoFocus
-        />
-        {error && <p className="text-sm text-red-400">Nesprávný kód</p>}
-        <Button className="w-full h-10" onClick={handleSubmit} disabled={pin.length < 1}>
-          Vstoupit
-        </Button>
-      </div>
-    </div>
-  )
-}
 
 const NOTE_TYPE_CONFIG: Record<ReleaseNote["type"], { Icon: typeof Sparkles; color: string; label: string }> = {
   feature: { Icon: Sparkles, color: "text-blue-400", label: "Feature" },
@@ -102,7 +54,7 @@ export function ClientTopBar() {
 
   return (
     <>
-      <div className="hidden lg:flex h-14 items-center justify-between border-b border-zinc-700/50 bg-zinc-900 px-6 shrink-0">
+      <nav aria-label="Hlavní navigace" className="hidden lg:flex h-14 items-center justify-between border-b border-zinc-700/50 bg-zinc-900 px-6 shrink-0">
         {/* Left: logo + meta */}
         <div className="flex items-center gap-4">
           <Image
@@ -212,7 +164,7 @@ export function ClientTopBar() {
             </Tooltip>
           </TooltipProvider>
         </div>
-      </div>
+      </nav>
 
     </>
   )

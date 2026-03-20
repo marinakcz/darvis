@@ -84,7 +84,7 @@ function usePhoneScale() {
   )
 }
 
-export function PhoneFrame({ children }: { children: React.ReactNode }) {
+export function PhoneFrame({ children, tabBar }: { children: React.ReactNode; tabBar?: React.ReactNode }) {
   const scale = usePhoneScale()
   const pinMode = usePinMode()
   const [allPins, setAllPins] = useState<AnyPin[]>([])
@@ -137,32 +137,6 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
     })
   }
 
-  function handleAddPinMobile(pin: { x: number; y: number; scrollY: number; contentHeight: number; message: string; page: string; author?: string }) {
-    const tempId = `temp-${Date.now()}`
-    const tempPin: AnyPin = {
-      id: tempId,
-      kind: "pin",
-      message: pin.message,
-      type: null,
-      page: pin.page,
-      x: pin.x,
-      y: pin.y,
-      scrollY: pin.scrollY,
-      contentHeight: pin.contentHeight,
-      author: pin.author || null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      resolvedAt: null,
-    }
-    setAllPins((prev) => [...prev, tempPin])
-
-    submitPin(pin).then((saved) => {
-      if (saved) {
-        setAllPins((prev) => prev.map((p) => (p.id === tempId ? saved : p)))
-      }
-    })
-  }
-
   function handleDeactivate() {
     setPinModeGlobal(false)
     window.dispatchEvent(new Event("darvis:pin-mode-off"))
@@ -176,12 +150,13 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
           <PinOverlay
             active={pinMode}
             pins={pins}
-            onAddPin={handleAddPinMobile}
+            onAddPin={handleAddPin}
             containerRef={mobileContentRef}
             onDeactivate={handleDeactivate}
           />
           {children}
         </div>
+        {tabBar}
         {/* Mobile comment toggle button */}
         <button
           type="button"
@@ -192,7 +167,9 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
               setPinModeGlobal(true)
             }
           }}
-          className={`fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium shadow-lg transition-colors lg:hidden ${
+          aria-label={pinMode ? "Ukončit režim komentářů" : "Zapnout režim komentářů"}
+          aria-pressed={pinMode}
+          className={`fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium shadow-lg transition-colors lg:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
             pinMode
               ? "border border-blue-500/50 bg-blue-500/10 text-blue-400 backdrop-blur"
               : "border border-zinc-700 bg-zinc-900 text-zinc-400 backdrop-blur hover:bg-zinc-800"
@@ -229,28 +206,31 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
                   {/* Home indicator */}
                   <div className="absolute bottom-[6px] left-1/2 z-50 h-[5px] w-[130px] -translate-x-1/2 rounded-full bg-zinc-600" />
 
-                  {/* Screen — scrollable container with pins inside */}
-                  <div
-                    ref={contentRef}
-                    className="flex h-full flex-col overflow-y-auto overflow-x-hidden pt-[12px] pb-[20px] relative"
-                  >
-                    <PinOverlay
-                      active={pinMode}
-                      pins={pins}
-                      onAddPin={handleAddPin}
-                      containerRef={contentRef}
-                      onDeactivate={handleDeactivate}
-                    />
-                    {children}
+                  {/* Screen — flex column: scrollable content + fixed tab bar */}
+                  <div className="flex h-full flex-col pt-[12px] pb-[20px]">
+                    <div
+                      ref={contentRef}
+                      className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden relative"
+                    >
+                      <PinOverlay
+                        active={pinMode}
+                        pins={pins}
+                        onAddPin={handleAddPin}
+                        containerRef={contentRef}
+                        onDeactivate={handleDeactivate}
+                      />
+                      {children}
+                    </div>
+                    {tabBar}
                   </div>
                 </div>
-              </div>
 
               {/* Side buttons */}
               <div className="absolute -left-[5px] top-[155px] h-[28px] w-[4px] rounded-l-sm bg-zinc-600" />
               <div className="absolute -left-[5px] top-[200px] h-[52px] w-[4px] rounded-l-sm bg-zinc-600" />
               <div className="absolute -left-[5px] top-[264px] h-[52px] w-[4px] rounded-l-sm bg-zinc-600" />
               <div className="absolute -right-[5px] top-[220px] h-[76px] w-[4px] rounded-r-sm bg-zinc-600" />
+              </div>
             </div>
           </div>
 
@@ -262,7 +242,7 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
                 localStorage.removeItem("darvis-job")
                 window.location.href = "/survey?step=0"
               }}
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-zinc-700/50 px-5 py-2.5 text-sm text-zinc-400 font-medium transition-colors hover:border-zinc-600 hover:text-zinc-200 hover:bg-zinc-800/50"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-zinc-700/50 px-5 py-2.5 text-sm text-zinc-400 font-medium transition-colors hover:border-zinc-600 hover:text-zinc-200 hover:bg-zinc-800/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               ↺ Začít znova
             </button>
@@ -275,7 +255,9 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
                   setPinModeGlobal(true)
                 }
               }}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg border px-5 py-2.5 text-sm font-medium transition-colors ${
+              aria-label={pinMode ? "Ukončit režim komentářů" : "Zapnout režim komentářů"}
+              aria-pressed={pinMode}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg border px-5 py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 pinMode
                   ? "border-blue-500/50 bg-blue-500/10 text-blue-400"
                   : "border-zinc-700/50 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 hover:bg-zinc-800/50"

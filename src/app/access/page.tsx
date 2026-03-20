@@ -48,7 +48,7 @@ export default function AccessPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-6 w-full max-w-sm px-6">
+      <main className="flex flex-col items-center gap-6 w-full max-w-sm px-6">
         <Image
           src="/logo.svg"
           alt="Darvis"
@@ -58,7 +58,7 @@ export default function AccessPage() {
         />
         <h1 className="text-lg font-semibold text-zinc-200">Přístupový kód</h1>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3" role="group" aria-label="Přístupový PIN kód">
           {digits.map((digit, i) => (
             <input
               key={i}
@@ -70,7 +70,8 @@ export default function AccessPage() {
               onChange={(e) => handleInput(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
               autoFocus={i === 0}
-              className={`w-12 h-14 text-center text-xl rounded-xl border-2 bg-zinc-900 outline-none transition-all ${
+              aria-label={`Číslice ${i + 1}`}
+              className={`w-12 h-14 text-center text-xl rounded-xl border-2 bg-zinc-900 outline-none transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 error
                   ? "border-red-500/50 bg-red-500/5"
                   : digit
@@ -81,8 +82,8 @@ export default function AccessPage() {
           ))}
         </div>
 
-        {error && <p className="text-sm text-red-400">Nesprávný kód</p>}
-      </div>
+        {error && <p role="alert" className="text-sm text-red-400">Nesprávný kód. Zkuste to prosím znovu.</p>}
+      </main>
     </div>
   )
 }

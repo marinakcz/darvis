@@ -47,7 +47,10 @@ export function StepInventory({ job, onChange, onNext, onBack }: StepInventoryPr
       {job.rooms.length === 0 && !showPicker && (
         <div className="flex flex-col items-center gap-4 py-12 text-center">
           <p className="text-lg text-muted-foreground">
-            Zatím žádné místnosti
+            Zatím nemáte žádné místnosti.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Začněte přidáním místnosti, do které pak přiřadíte položky k přestěhování.
           </p>
           <Button size="lg" className="h-14 text-base" onClick={() => setShowPicker(true)}>
             + Přidat místnost
@@ -86,18 +89,20 @@ export function StepInventory({ job, onChange, onNext, onBack }: StepInventoryPr
       )}
 
       {/* Navigation */}
-      <div className="flex gap-3 pt-4">
-        <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
-          ← Zpět
-        </Button>
-        <Button
-          size="lg"
-          className="h-14 flex-1 text-base"
-          onClick={onNext}
-          disabled={job.rooms.length === 0}
-        >
-          Kalkulace →
-        </Button>
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
+        <div className="flex gap-3">
+          <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
+            ← Zpět
+          </Button>
+          <Button
+            size="lg"
+            className="h-14 flex-1 text-base"
+            onClick={onNext}
+            disabled={job.rooms.length === 0}
+          >
+            Přejít na kalkulaci →
+          </Button>
+        </div>
       </div>
     </div>
   )

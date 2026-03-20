@@ -29,7 +29,7 @@ export function RoomPicker({ onSelect, onClose }: RoomPickerProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base">Vyberte místnost</CardTitle>
-        <Button variant="ghost" size="icon-sm" onClick={onClose}>
+        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Zavřít výběr místnosti">
           <X className="size-4" />
         </Button>
       </CardHeader>
@@ -42,7 +42,7 @@ export function RoomPicker({ onSelect, onClose }: RoomPickerProps) {
                 key={type}
                 type="button"
                 onClick={() => onSelect(type)}
-                className="flex flex-col items-center gap-1.5 rounded-lg border border-border p-3 text-sm transition-colors hover:bg-accent active:bg-accent"
+                className="flex flex-col items-center gap-1.5 rounded-lg border border-border p-3 text-sm min-h-[44px] transition-colors hover:bg-accent active:bg-accent"
               >
                 <Icon className="size-6 text-muted-foreground" />
                 <span className="text-xs font-medium">{ROOM_LABELS[type]}</span>
