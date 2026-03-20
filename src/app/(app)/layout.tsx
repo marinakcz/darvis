@@ -3,19 +3,21 @@
 import { usePathname } from "next/navigation"
 import { PhoneFrame } from "@/components/phone-frame"
 import { MobileTabBar } from "@/components/mobile-tab-bar"
+import type { TabId } from "@/components/mobile-tab-bar"
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  // Hide tab bar inside the survey wizard
-  const isSurvey = /\/jobs\/[^/]+\/survey/.test(pathname)
+  // Hide tab bar inside the survey wizard and offer page
+  const hideTabBar = /\/jobs\/[^/]+\/(survey|offer)/.test(pathname)
 
-  const activeTab: "jobs" | "calendar" | "profile" =
-    pathname.startsWith("/calendar") ? "calendar" :
-    pathname.startsWith("/profile") ? "profile" :
-    "jobs"
+  // Detect active tab
+  let activeTab: TabId = "home"
+  if (pathname.startsWith("/notifications")) activeTab = "notifications"
+  else if (pathname.startsWith("/profile")) activeTab = "profile"
+  else if (pathname.startsWith("/jobs")) activeTab = "jobs"
 
-  const tabBar = isSurvey ? null : (
+  const tabBar = hideTabBar ? null : (
     <MobileTabBar activeTab={activeTab} />
   )
 

@@ -7,8 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, SFMono-Regular, monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -46,6 +46,19 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Darvis design tokens */
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
 }
 
 :root {
@@ -81,46 +94,110 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Darvis custom tokens — light fallbacks */
+  --surface-0: oklch(0.97 0 0);
+  --surface-1: oklch(1 0 0);
+  --surface-2: oklch(0.96 0 0);
+  --surface-3: oklch(0.93 0 0);
+  --success: oklch(0.55 0.20 155);
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.80 0.15 85);
+  --warning-foreground: oklch(0.30 0 0);
+  --text-primary: oklch(0.145 0 0);
+  --text-secondary: oklch(0.45 0 0);
+  --text-tertiary: oklch(0.65 0 0);
 }
 
 .dark {
-  /* Claude Code inspired — each value shifted ~1-2% */
-  --background: oklch(0.135 0 0);
-  --foreground: oklch(0.975 0 0);
-  --card: oklch(0.195 0 0);
-  --card-foreground: oklch(0.975 0 0);
-  --popover: oklch(0.195 0 0);
-  --popover-foreground: oklch(0.975 0 0);
-  --primary: oklch(0.91 0 0);
-  --primary-foreground: oklch(0.195 0 0);
-  --secondary: oklch(0.26 0 0);
-  --secondary-foreground: oklch(0.975 0 0);
-  --muted: oklch(0.26 0 0);
-  --muted-foreground: oklch(0.695 0 0);
-  --accent: oklch(0.26 0 0);
-  --accent-foreground: oklch(0.975 0 0);
-  --destructive: oklch(0.69 0.19 23);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 13%);
-  --ring: oklch(0.545 0 0);
+  /*
+   * Darvis Design System — Layered Surfaces
+   *
+   * 3 elevation layers (darker → lighter):
+   *   L0  --background    page canvas         oklch(0.13)
+   *   L1  --card          card / section       oklch(0.17)
+   *   L2  --muted         nested group / row   oklch(0.21)
+   *
+   * Borders are near-invisible — surfaces separate by luminance, not lines.
+   * Primary action = green (--success). Neutral actions = muted white.
+   * Amber for warnings, red for destructive.
+   */
+
+  /* L0 — page canvas */
+  --background: oklch(0.13 0 0);
+  --foreground: oklch(0.96 0 0);
+
+  /* L1 — cards, sections */
+  --card: oklch(0.17 0 0);
+  --card-foreground: oklch(0.96 0 0);
+
+  /* L2 — nested groups, inputs, rows */
+  --muted: oklch(0.21 0 0);
+  --muted-foreground: oklch(0.60 0 0);
+
+  /* Popover = L1 */
+  --popover: oklch(0.17 0 0);
+  --popover-foreground: oklch(0.96 0 0);
+
+  /* Primary — white/light for neutral buttons */
+  --primary: oklch(0.92 0 0);
+  --primary-foreground: oklch(0.13 0 0);
+
+  /* Secondary & accent = L2 */
+  --secondary: oklch(0.21 0 0);
+  --secondary-foreground: oklch(0.96 0 0);
+  --accent: oklch(0.21 0 0);
+  --accent-foreground: oklch(0.96 0 0);
+
+  /* Semantic */
+  --destructive: oklch(0.65 0.22 25);
+
+  /* Borders — barely there */
+  --border: oklch(1 0 0 / 7%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(0.50 0 0);
+
+  /* Charts */
   --chart-1: oklch(0.86 0 0);
   --chart-2: oklch(0.545 0 0);
   --chart-3: oklch(0.43 0 0);
   --chart-4: oklch(0.36 0 0);
   --chart-5: oklch(0.26 0 0);
-  --sidebar: oklch(0.195 0 0);
-  --sidebar-foreground: oklch(0.975 0 0);
+
+  /* Sidebar */
+  --sidebar: oklch(0.17 0 0);
+  --sidebar-foreground: oklch(0.96 0 0);
   --sidebar-primary: oklch(0.48 0.24 265);
-  --sidebar-primary-foreground: oklch(0.975 0 0);
-  --sidebar-accent: oklch(0.26 0 0);
-  --sidebar-accent-foreground: oklch(0.975 0 0);
-  --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: oklch(0.545 0 0);
+  --sidebar-primary-foreground: oklch(0.96 0 0);
+  --sidebar-accent: oklch(0.21 0 0);
+  --sidebar-accent-foreground: oklch(0.96 0 0);
+  --sidebar-border: oklch(1 0 0 / 7%);
+  --sidebar-ring: oklch(0.50 0 0);
+
+  /* ── Darvis custom tokens ── */
+  --surface-0: oklch(0.13 0 0);   /* page */
+  --surface-1: oklch(0.17 0 0);   /* card */
+  --surface-2: oklch(0.21 0 0);   /* nested */
+  --surface-3: oklch(0.25 0 0);   /* hover / active */
+
+  --success: oklch(0.72 0.19 155);         /* green CTA */
+  --success-foreground: oklch(0.13 0 0);
+  --warning: oklch(0.80 0.15 85);          /* amber alerts */
+  --warning-foreground: oklch(0.30 0 0);
+
+  --text-primary: oklch(0.96 0 0);
+  --text-secondary: oklch(0.60 0 0);
+  --text-tertiary: oklch(0.45 0 0);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: none;         /* Firefox */
+    -ms-overflow-style: none;      /* IE/Edge */
+  }
+  *::-webkit-scrollbar {
+    display: none;                 /* Chrome/Safari */
   }
   body {
     @apply bg-background text-foreground;

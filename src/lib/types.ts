@@ -1,5 +1,8 @@
 export type SurveyMode = "quick" | "detailed"
 
+/** Per-room mode — replaces global SurveyMode for survey flow */
+export type RoomMode = "quick" | "detailed"
+
 export type JobType = "apartment" | "office" | "heavy" | "art" | "international"
 
 export const JOB_TYPE_LABELS: Record<JobType, string> = {
@@ -55,6 +58,8 @@ export interface Job {
   rooms: Room[]
   /** Martin mód — % odhad za místnost */
   quickRooms: QuickRoom[]
+  /** Nový unified model — per-room režim (Blok 1) */
+  surveyRooms: SurveyRoom[]
   /** Materiálový požadavek */
   materials: MaterialOrder
   /** Zda zakázka pochází z CRM (readonly údaje) */
@@ -63,6 +68,8 @@ export interface Job {
   technicianNotes?: string
   /** Přístup a rizika */
   access: JobAccess
+  /** Poznámka dispečera */
+  dispatcherNote?: string
 }
 
 export interface Room {
@@ -77,6 +84,18 @@ export interface QuickRoom {
   id: string
   type: RoomType
   percent: number // 0–100, procento z jednoho auta (24m³)
+}
+
+/** Unified room — per-room režim quick/detailed (Blok 1) */
+export interface SurveyRoom {
+  id: string
+  type: RoomType
+  customName?: string
+  mode: RoomMode
+  /** Quick mode: % zaplnění auta */
+  percent: number
+  /** Detailed mode: katalogové položky */
+  items: InventoryItem[]
 }
 
 export interface InventoryItem {
@@ -160,6 +179,7 @@ export function createEmptyJob(mode: SurveyMode = "detailed"): Job {
     date: "",
     rooms: [],
     quickRooms: [],
+    surveyRooms: [],
     materials: {
       boxes: 0,
       crates: 0,

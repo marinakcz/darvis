@@ -17,6 +17,8 @@ export interface MockJob {
   actionable?: boolean
   time?: string
   sentDate?: string
+  /** Poznámka dispečera pro briefing */
+  dispatcherNote?: string
 }
 
 /** Today's date for mock data: 2026-03-20 */
@@ -29,6 +31,7 @@ export const MOCK_JOBS: MockJob[] = [
     distance: 14, date: TODAY, floor: { pickup: 3, delivery: 1 }, elevator: { pickup: false, delivery: true },
     status: "survey", statusLabel: "Čeká na zaměření", price: "\u2014", statusColor: "text-blue-400",
     highlight: true, actionable: true, time: "09:00",
+    dispatcherNote: "Klient preferuje dopolední termín. Pozor na úzké schodiště ve 2. patře.",
   },
   {
     id: "kowalski", name: "Kowalski — Smíchov \u2192 Dejvice", client: "Anna Kowalski", phone: "+420 608 222 333",
@@ -36,6 +39,7 @@ export const MOCK_JOBS: MockJob[] = [
     distance: 8, date: "2026-03-27", floor: { pickup: 2, delivery: 4 }, elevator: { pickup: true, delivery: true },
     status: "survey", statusLabel: "Čeká na zaměření", price: "\u2014", statusColor: "text-blue-400",
     highlight: true, actionable: true,
+    dispatcherNote: "Klientka má velký klavír — nutné speciální balení.",
   },
   {
     id: "svobodova", name: "Svobodová — Vinohrady \u2192 Letňany", client: "Marie Svobodová", phone: "+420 731 444 555",
@@ -84,3 +88,53 @@ export const CALENDAR_ENTRIES: CalendarEntry[] = [
 export function getMockJobById(id: string): MockJob | undefined {
   return MOCK_JOBS.find((j) => j.id === id)
 }
+
+// --- Notifications ---
+
+export interface MockNotification {
+  id: string
+  type: "approval" | "rejection" | "message" | "change" | "comment"
+  title: string
+  body: string
+  time: string // relative, e.g. "před 2 hod"
+  read: boolean
+  jobId?: string
+}
+
+const NOTIFICATION_TYPE_LABELS: Record<MockNotification["type"], string> = {
+  approval: "Schválení",
+  rejection: "Odmítnutí",
+  message: "Zpráva",
+  change: "Změna",
+  comment: "Komentář",
+}
+
+export { NOTIFICATION_TYPE_LABELS }
+
+export const MOCK_NOTIFICATIONS: MockNotification[] = [
+  {
+    id: "n1", type: "approval", title: "Svobodová schválila nabídku",
+    body: "Nabídka 32 100 Kč byla schválena. Můžete naplánovat realizaci.",
+    time: "před 2 hod", read: false, jobId: "svobodova",
+  },
+  {
+    id: "n2", type: "message", title: "Dispečink: Kowalski přeplánován",
+    body: "Termín zaměření přesunut z 27. 3. na 29. 3. — klientka požádala o změnu.",
+    time: "před 5 hod", read: false, jobId: "kowalski",
+  },
+  {
+    id: "n3", type: "comment", title: "Dvořák zanechal komentář",
+    body: "\"Můžete přijet o půl hodiny dříve? Budu doma od 8:30.\"",
+    time: "včera", read: true, jobId: "dvorak",
+  },
+  {
+    id: "n4", type: "change", title: "Aktualizace ceníku",
+    body: "Hodinové sazby vozidel byly aktualizovány od 1. 4. 2026.",
+    time: "před 2 dny", read: true,
+  },
+  {
+    id: "n5", type: "rejection", title: "Horáková odmítla nabídku",
+    body: "Klientka odmítla nabídku 15 200 Kč. Důvod: příliš vysoká cena.",
+    time: "před 3 dny", read: true, jobId: "horakova",
+  },
+]

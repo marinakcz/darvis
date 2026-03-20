@@ -1,4 +1,4 @@
-import type { Job, Calculation, MaterialOrder } from "./types"
+import type { Job, Calculation, MaterialOrder, SurveyRoom } from "./types"
 import { getCatalogItem } from "./catalog"
 import {
   VEHICLES,
@@ -27,12 +27,29 @@ export function calculateJob(job: Job): Calculation {
   let totalVolume: number
   let servicesCost = 0
 
-  if (job.mode === "quick") {
-    // Martin mód — % odhad
+  // New unified surveyRooms path (Blok 1)
+  if (job.surveyRooms && job.surveyRooms.length > 0) {
+    totalVolume = 0
+    for (const room of job.surveyRooms) {
+      if (room.mode === "quick") {
+        totalVolume += (room.percent / 100) * vehicleCapacity
+      } else {
+        for (const item of room.items) {
+          const catalog = getCatalogItem(item.catalogId)
+          if (!catalog) continue
+          totalVolume += catalog.volume * item.quantity
+          if (item.services.disassembly) servicesCost += SERVICE_RATE_DISASSEMBLY * item.quantity
+          if (item.services.packing) servicesCost += SERVICE_RATE_PACKING * item.quantity
+          if (item.services.assembly) servicesCost += SERVICE_RATE_ASSEMBLY * item.quantity
+        }
+      }
+    }
+  } else if (job.mode === "quick") {
+    // Legacy: Martin mód — % odhad
     const totalPercent = job.quickRooms.reduce((sum, r) => sum + r.percent, 0)
     totalVolume = (totalPercent / 100) * vehicleCapacity
   } else {
-    // Richard mód — katalogové položky
+    // Legacy: Richard mód — katalogové položky
     totalVolume = 0
     for (const room of job.rooms) {
       for (const item of room.items) {
