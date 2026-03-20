@@ -97,20 +97,15 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
     fetch("/api/feedback")
       .then((r) => r.json())
       .then((data: AnyPin[]) => {
-        setAllPins(data.filter((e) => e.kind === "pin"))
+        setAllPins(data.filter((e) => e.kind === "pin" && e.x !== null && e.x !== undefined))
       })
       .catch(() => {})
   }
 
-  // Filter pins by current page — use useSyncExternalStore to track URL changes
-  const currentPage = useSyncExternalStore(
-    useCallback((cb: () => void) => {
-      window.addEventListener("popstate", cb)
-      return () => window.removeEventListener("popstate", cb)
-    }, []),
-    () => window.location.pathname + window.location.search,
-    () => "",
-  )
+  // Current page for filtering — re-read on every render (URL changes via Next.js router)
+  const currentPage = typeof window !== "undefined"
+    ? window.location.pathname + window.location.search
+    : ""
 
   const pins = allPins.filter((p) => p.page === currentPage)
 
