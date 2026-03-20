@@ -136,6 +136,78 @@
   }
 }
 
+/* iOS-like page transitions */
+.ios-slide-in {
+  animation: iosSlideIn 300ms ease-out;
+}
+
+@keyframes iosSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ios-fade-in {
+  animation: iosFadeIn 200ms ease-out;
+}
+
+@keyframes iosFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Bottom sheet slide-up */
+.ios-sheet-backdrop {
+  animation: iosFadeIn 200ms ease-out;
+}
+
+.ios-sheet-content {
+  animation: iosSheetUp 300ms ease-out;
+}
+
+@keyframes iosSheetUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Pull-to-refresh visual indicator */
+.pull-indicator {
+  position: relative;
+}
+
+.pull-indicator::before {
+  content: "Potahněte pro aktualizaci";
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  padding: 6px 0;
+  margin-top: -28px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.pull-indicator:has(> :first-child:hover)::before,
+.pull-indicator:active::before {
+  opacity: 0;
+}
+
+/* Show only on overscroll (negative scroll position) */
+@supports (overflow: overlay) {
+  .pull-indicator::before {
+    opacity: 0;
+  }
+}
+
 /* Adjustments when running as installed PWA */
 @media (display-mode: standalone) {
   body {

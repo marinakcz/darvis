@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useState, useCallback } from "react"
 import Image from "next/image"
 import type { Job, SurveyMode } from "@/lib/types"
-import { Zap, FileText, MapPin, Clock, LogOut, ChevronRight } from "lucide-react"
+import { Zap, FileText, MapPin, Clock, LogOut, ChevronRight, ChevronLeft } from "lucide-react"
 import { createEmptyJob } from "@/lib/types"
 import { WizardNav } from "@/components/survey/wizard-nav"
 import { StepJobInfo } from "@/components/survey/step-job-info"
@@ -87,39 +87,42 @@ const CALENDAR_ENTRIES = [
 /** Calendar mock screen */
 function CalendarScreen() {
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b bg-background px-4 py-3">
+    <div className="flex flex-1 flex-col ios-fade-in">
+      <header className="bg-background px-4 pt-4 pb-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold tracking-tight">Kalendář</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Kalendář</h1>
           <span className="text-sm text-muted-foreground">Březen 2026</span>
         </div>
       </header>
       <main className="flex flex-1 flex-col gap-3 px-4 py-4">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">Nadcházející</p>
-        {CALENDAR_ENTRIES.map((entry) => {
-          const dateFormatted = new Date(entry.date).toLocaleDateString("cs-CZ", {
-            weekday: "short", day: "numeric", month: "numeric",
-          })
-          return (
-            <div
-              key={entry.id}
-              className="rounded-lg border border-border p-3 flex flex-col gap-1.5"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="size-3.5 text-muted-foreground" />
-                  <span className="font-medium">{dateFormatted}</span>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Nadcházející</p>
+        <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
+          {CALENDAR_ENTRIES.map((entry) => {
+            const dateFormatted = new Date(entry.date).toLocaleDateString("cs-CZ", {
+              weekday: "short", day: "numeric", month: "numeric",
+            })
+            const statusBorderColor = entry.statusColor === "text-blue-400" ? "border-l-blue-400" : entry.statusColor === "text-green-400" ? "border-l-green-400" : "border-l-yellow-400"
+            return (
+              <div
+                key={entry.id}
+                className={`p-3 flex flex-col gap-1.5 border-l-[3px] ${statusBorderColor}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="size-3.5 text-muted-foreground" />
+                    <span className="font-medium">{dateFormatted}</span>
+                  </div>
+                  <span className={`text-xs font-medium ${entry.statusColor}`}>{entry.status}</span>
                 </div>
-                <span className={`text-xs font-medium ${entry.statusColor}`}>{entry.status}</span>
+                <span className="text-sm font-medium">{entry.client}</span>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <MapPin className="size-3" />
+                  <span>{entry.address}</span>
+                </div>
               </div>
-              <span className="text-sm font-medium">{entry.client}</span>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <MapPin className="size-3" />
-                <span>{entry.address}</span>
-              </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </main>
     </div>
   )
@@ -128,58 +131,70 @@ function CalendarScreen() {
 /** Profile mock screen */
 function ProfileScreen({ onLogout }: { onLogout: () => void }) {
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b bg-background px-4 py-3">
-        <h1 className="text-lg font-semibold tracking-tight">Profil</h1>
+    <div className="flex flex-1 flex-col ios-fade-in">
+      <header className="bg-background px-4 pt-4 pb-2">
+        <h1 className="text-2xl font-bold tracking-tight">Profil</h1>
       </header>
-      <main className="flex flex-1 flex-col gap-4 px-4 py-4">
+      <main className="flex flex-1 flex-col gap-5 px-4 py-4">
         {/* User info */}
-        <div className="rounded-lg border border-border p-4 flex flex-col gap-1">
+        <div className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-1">
           <span className="text-base font-semibold">Jan Technik</span>
           <span className="text-sm text-muted-foreground">Obchodník</span>
         </div>
 
         {/* Settings */}
-        <div className="flex flex-col gap-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider px-1 pb-1">Nastavení</p>
-          <div className="rounded-lg border border-border divide-y divide-border">
-            <div className="flex items-center justify-between p-3">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider px-4 pb-0.5">Nastavení</p>
+          <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">Výchozí režim zaměření</span>
-                <span className="text-xs text-muted-foreground">Rychlý / Detailní</span>
+                <span className="text-sm">Výchozí režim zaměření</span>
               </div>
-              <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded">Rychlý</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm text-muted-foreground">Rychlý</span>
+                <ChevronRight className="size-4 text-muted-foreground/50" />
+              </div>
             </div>
-            <div className="flex items-center justify-between p-3">
-              <span className="text-sm font-medium">Tmavý režim</span>
-              <div className="relative h-6 w-10 rounded-full bg-primary transition-colors">
-                <div className="absolute right-1 top-1 h-4 w-4 rounded-full bg-background shadow transition-transform" />
+            <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
+              <span className="text-sm">Tmavý režim</span>
+              <div className="relative h-[31px] w-[51px] rounded-full bg-primary transition-colors">
+                <div className="absolute right-[2px] top-[2px] h-[27px] w-[27px] rounded-full bg-background shadow transition-transform" />
               </div>
             </div>
           </div>
         </div>
 
         {/* App info */}
-        <div className="flex flex-col gap-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider px-1 pb-1">Aplikace</p>
-          <div className="rounded-lg border border-border divide-y divide-border">
-            <div className="flex items-center justify-between p-3">
-              <span className="text-sm text-muted-foreground">Verze</span>
-              <span className="text-xs font-mono text-muted-foreground">v0.1.0</span>
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider px-4 pb-0.5">Aplikace</p>
+          <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
+              <span className="text-sm">Verze</span>
+              <span className="text-sm text-muted-foreground">v0.1.0</span>
             </div>
-            <button type="button" className="flex items-center justify-between p-3 w-full text-left hover:bg-accent transition-colors rounded-b-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-              <span className="text-sm text-muted-foreground">Podpora</span>
-              <ChevronRight className="size-4 text-muted-foreground" />
+            <button type="button" className="flex items-center justify-between px-4 py-3 min-h-[44px] w-full text-left hover:bg-accent active:bg-accent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+              <span className="text-sm">Podpora</span>
+              <ChevronRight className="size-4 text-muted-foreground/50" />
+            </button>
+            <button type="button" className="flex items-center justify-between px-4 py-3 min-h-[44px] w-full text-left hover:bg-accent active:bg-accent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+              <span className="text-sm">Podmínky použití</span>
+              <ChevronRight className="size-4 text-muted-foreground/50" />
             </button>
           </div>
         </div>
 
         {/* Logout */}
         <div className="mt-auto pt-4">
-          <Button variant="outline" size="lg" className="h-12 w-full text-base gap-2 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={onLogout}>
-            <LogOut className="size-4" />
-            Odhlásit se
-          </Button>
+          <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex items-center justify-center gap-2 px-4 py-3 min-h-[44px] w-full text-center text-destructive hover:bg-destructive/10 active:bg-destructive/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <LogOut className="size-4" />
+              <span className="text-sm font-medium">Odhlásit se</span>
+            </button>
+          </div>
         </div>
       </main>
     </div>
@@ -193,16 +208,19 @@ function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (m
 
   if (view === "mode-picker") {
     return (
-      <div className="flex flex-1 flex-col">
-        <header className="border-b bg-background px-4 py-3">
+      <div className="flex flex-1 flex-col ios-slide-in">
+        <header className="border-b bg-background/80 backdrop-blur-xl px-4 py-3">
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setView("list")} aria-label="Zpět na seznam zakázek" className="text-muted-foreground text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">←</button>
-            <h1 className="text-lg font-semibold tracking-tight">Nová zakázka</h1>
+            <button type="button" onClick={() => setView("list")} aria-label="Zpět na seznam zakázek" className="flex items-center gap-0.5 text-primary text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">
+              <ChevronLeft className="size-5" />
+              <span>Zpět</span>
+            </button>
+            <h1 className="text-lg font-semibold tracking-tight flex-1 text-center pr-12">Nová zakázka</h1>
           </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 px-4 py-6">
           <p className="text-sm text-muted-foreground">Jak chcete zaměřit?</p>
-          <button type="button" onClick={() => onNewJob("quick")} className="flex flex-col gap-2 rounded-xl border border-border p-4 text-left transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          <button type="button" onClick={() => onNewJob("quick")} className="flex flex-col gap-2 rounded-xl border border-border p-4 text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             <div className="flex items-center gap-2">
               <Zap className="size-5" />
               <span className="text-base font-semibold">Rychlý odhad</span>
@@ -210,7 +228,7 @@ function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (m
             <p className="text-sm text-muted-foreground">Projdete místnosti a odhadnete % zaplnění auta. Rychlé, bez počítání kusů.</p>
             <span className="text-xs text-muted-foreground font-mono">~2 min · telefon</span>
           </button>
-          <button type="button" onClick={() => onNewJob("detailed")} className="flex flex-col gap-2 rounded-xl border border-border p-4 text-left transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          <button type="button" onClick={() => onNewJob("detailed")} className="flex flex-col gap-2 rounded-xl border border-border p-4 text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             <div className="flex items-center gap-2">
               <FileText className="size-5" />
               <span className="text-base font-semibold">Detailní zaměření</span>
@@ -228,11 +246,14 @@ function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (m
       weekday: "short", day: "numeric", month: "long",
     })
     return (
-      <div className="flex flex-1 flex-col">
-        <header className="border-b bg-background px-4 py-3">
+      <div className="flex flex-1 flex-col ios-slide-in">
+        <header className="border-b bg-background/80 backdrop-blur-xl px-4 py-3">
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setView("list")} aria-label="Zpět na seznam zakázek" className="text-muted-foreground text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">←</button>
-            <h1 className="text-lg font-semibold tracking-tight">Detail zakázky</h1>
+            <button type="button" onClick={() => setView("list")} aria-label="Zpět na seznam zakázek" className="flex items-center gap-0.5 text-primary text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">
+              <ChevronLeft className="size-5" />
+              <span>Zpět</span>
+            </button>
+            <h1 className="text-lg font-semibold tracking-tight flex-1 text-center pr-12">Detail zakázky</h1>
           </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 px-4 py-4">
@@ -243,41 +264,55 @@ function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (m
           </div>
 
           {/* Client */}
-          <div className="rounded-lg border border-border p-3 flex flex-col gap-1.5">
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">Klient</span>
-            <span className="text-sm font-medium">{selectedJob.client}</span>
-            <span className="text-sm text-muted-foreground">{selectedJob.phone}</span>
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider px-4 pb-0.5">Klient</p>
+            <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
+              <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
+                <span className="text-sm">Jméno</span>
+                <span className="text-sm text-muted-foreground">{selectedJob.client}</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
+                <span className="text-sm">Telefon</span>
+                <span className="text-sm text-muted-foreground">{selectedJob.phone}</span>
+              </div>
+            </div>
           </div>
 
-          {/* Pickup */}
-          <div className="rounded-lg border border-border p-3 flex flex-col gap-1.5">
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">Nakládka</span>
-            <span className="text-sm">{selectedJob.pickup}</span>
-            <span className="text-xs text-muted-foreground">
-              {selectedJob.floor.pickup}. patro{selectedJob.elevator.pickup ? " · výtah" : " · bez výtahu"}
-            </span>
-          </div>
-
-          {/* Delivery */}
-          <div className="rounded-lg border border-border p-3 flex flex-col gap-1.5">
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">Vykládka</span>
-            <span className="text-sm">{selectedJob.delivery}</span>
-            <span className="text-xs text-muted-foreground">
-              {selectedJob.floor.delivery}. patro{selectedJob.elevator.delivery ? " · výtah" : " · bez výtahu"}
-            </span>
-          </div>
-
-          {/* Distance */}
-          <div className="flex justify-between text-sm px-1">
-            <span className="text-muted-foreground">Vzdálenost</span>
-            <span className="font-mono">{selectedJob.distance} km</span>
+          {/* Addresses */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider px-4 pb-0.5">Adresy</p>
+            <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
+              <div className="flex flex-col gap-0.5 px-4 py-3 min-h-[44px]">
+                <span className="text-xs text-muted-foreground">Nakládka</span>
+                <span className="text-sm">{selectedJob.pickup}</span>
+                <span className="text-xs text-muted-foreground">
+                  {selectedJob.floor.pickup}. patro{selectedJob.elevator.pickup ? " · výtah" : " · bez výtahu"}
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5 px-4 py-3 min-h-[44px]">
+                <span className="text-xs text-muted-foreground">Vykládka</span>
+                <span className="text-sm">{selectedJob.delivery}</span>
+                <span className="text-xs text-muted-foreground">
+                  {selectedJob.floor.delivery}. patro{selectedJob.elevator.delivery ? " · výtah" : " · bez výtahu"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
+                <span className="text-sm">Vzdálenost</span>
+                <span className="text-sm font-mono text-muted-foreground">{selectedJob.distance} km</span>
+              </div>
+            </div>
           </div>
 
           {/* Price if exists */}
           {selectedJob.price !== "—" && (
-            <div className="flex justify-between text-sm px-1">
-              <span className="text-muted-foreground">Cena</span>
-              <span className="font-mono font-medium">{selectedJob.price}</span>
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider px-4 pb-0.5">Cena</p>
+              <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
+                  <span className="text-sm">Celkem</span>
+                  <span className="text-sm font-mono font-medium">{selectedJob.price}</span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -298,32 +333,38 @@ function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (m
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b bg-background px-4 py-3">
+    <div className="flex flex-1 flex-col ios-fade-in">
+      <header className="bg-background px-4 pt-4 pb-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold tracking-tight">Zakázky</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Zakázky</h1>
           <span className="text-xs text-muted-foreground font-mono">Jan T.</span>
         </div>
       </header>
-      <main className="flex flex-1 flex-col gap-3 px-4 py-4">
-        {MOCK_JOBS.map((job) => (
-          <button
-            key={job.id}
-            type="button"
-            onClick={() => { setSelectedJob(job); setView("detail") }}
-            className={`rounded-lg border p-3 text-left transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${job.highlight ? "border-blue-500/30 bg-blue-500/5" : "border-border"}`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <span className="text-sm font-medium">{job.name}</span>
-              <span className="font-mono text-xs text-muted-foreground">{new Date(job.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric" })}</span>
-            </div>
-            <div className="flex items-center justify-between pt-1.5">
-              <span className={`text-xs font-medium ${job.statusColor}`}>{job.status}</span>
-              <span className="font-mono text-sm">{job.price}</span>
-            </div>
-          </button>
-        ))}
-        <Button size="lg" className="h-14 text-base mt-2" onClick={() => setView("mode-picker")}>
+      <main className="flex flex-1 flex-col gap-3 px-4 py-4 pull-indicator">
+        <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Aktivní zakázky</p>
+        <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
+          {MOCK_JOBS.map((job) => (
+            <button
+              key={job.id}
+              type="button"
+              onClick={() => { setSelectedJob(job); setView("detail") }}
+              className="flex items-center gap-3 px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-sm font-medium truncate">{job.name}</span>
+                  <span className="font-mono text-xs text-muted-foreground shrink-0">{new Date(job.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric" })}</span>
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <span className={`text-xs font-medium ${job.statusColor}`}>{job.status}</span>
+                  <span className="font-mono text-sm">{job.price}</span>
+                </div>
+              </div>
+              <ChevronRight className="size-4 text-muted-foreground/50 shrink-0" />
+            </button>
+          ))}
+        </div>
+        <Button size="lg" className="h-14 text-base mt-2 rounded-2xl" onClick={() => setView("mode-picker")}>
           + Nová zakázka
         </Button>
       </main>
@@ -456,7 +497,7 @@ export default function SurveyContent() {
 
     content = (
       <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-xl">
           <div className="mx-auto flex max-w-2xl flex-col gap-2 px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -470,7 +511,7 @@ export default function SurveyContent() {
             <WizardNav currentStep={step} onStepClick={goTo} steps={steps} />
           </div>
         </header>
-        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6">
+        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6 ios-slide-in" key={step}>
           {stepContent}
         </main>
       </div>
