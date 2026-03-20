@@ -169,7 +169,7 @@ export function PhoneFrame({ children, tabBar }: { children: React.ReactNode; ta
           }}
           aria-label={pinMode ? "Ukončit režim komentářů" : "Zapnout režim komentářů"}
           aria-pressed={pinMode}
-          className={`fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium shadow-lg transition-colors lg:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+          className={`fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-50 flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium shadow-lg transition-colors lg:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
             pinMode
               ? "border border-blue-500/50 bg-blue-500/10 text-blue-400 backdrop-blur"
               : "border border-zinc-700 bg-zinc-900 text-zinc-400 backdrop-blur hover:bg-zinc-800"

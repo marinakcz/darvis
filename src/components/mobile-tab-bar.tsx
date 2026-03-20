@@ -16,7 +16,7 @@ const TABS = [
 
 export function MobileTabBar({ activeTab, onNavigate }: MobileTabBarProps) {
   return (
-    <nav className="h-16 border-t border-border bg-background pb-4 flex items-center justify-around px-2 shrink-0">
+    <nav className="border-t border-border bg-background pb-[env(safe-area-inset-bottom)] flex items-center justify-around px-2 shrink-0" style={{ minHeight: 49 }}>
       {TABS.map((tab) => {
         const Icon = tab.icon
         const isActive = activeTab === tab.id
