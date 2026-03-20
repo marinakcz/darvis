@@ -33,17 +33,17 @@ function subscribePinMode(cb: () => void) {
   window.addEventListener("darvis:pin-mode-on", onEnable)
   window.addEventListener("darvis:pin-mode-off", onDisable)
 
-  // Keyboard shortcuts: Ctrl/Cmd+C = enable, Ctrl/Cmd+V = disable
+  // Keyboard shortcuts: C = enable pin mode, V or Esc = disable
   const onKeyDown = (e: KeyboardEvent) => {
-    // Only intercept when not typing in input/textarea
     const tag = (e.target as HTMLElement)?.tagName
     if (tag === "INPUT" || tag === "TEXTAREA") return
+    if (e.ctrlKey || e.metaKey || e.altKey) return
 
-    if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+    if (e.key === "c" || e.key === "C") {
       e.preventDefault()
       setPinModeGlobal(true)
     }
-    if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+    if (e.key === "v" || e.key === "V" || e.key === "Escape") {
       e.preventDefault()
       setPinModeGlobal(false)
     }
@@ -242,13 +242,8 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
             >
               {pinMode ? <MessageSquareOff className="size-4" /> : <MessageSquarePlus className="size-4" />}
               {pinMode ? "Ukončit" : "Komentář"}
-              <kbd className="inline-flex items-center gap-0.5 ml-1 text-[10px] text-zinc-500 font-mono">
-                <span className="rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 leading-none">
-                  {typeof navigator !== "undefined" && navigator.platform?.includes("Mac") ? "⌘" : "Ctrl"}
-                </span>
-                <span className="rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 leading-none">
-                  {pinMode ? "V" : "C"}
-                </span>
+              <kbd className="rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 ml-1 text-[10px] text-zinc-500 font-mono leading-none">
+                {pinMode ? "V" : "C"}
               </kbd>
             </button>
           </div>
