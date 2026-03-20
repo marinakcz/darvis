@@ -68,8 +68,14 @@ export function PhoneFrame({ children, tabBar }: { children: React.ReactNode; ta
           <button
             type="button"
             onClick={() => {
-              localStorage.removeItem("darvis-job")
-              window.location.href = "/survey?step=0"
+              // Clear all job drafts
+              const keys = Object.keys(localStorage)
+              for (const key of keys) {
+                if (key.startsWith("darvis-job")) {
+                  localStorage.removeItem(key)
+                }
+              }
+              window.location.href = "/dashboard"
             }}
             className="rounded-lg border border-zinc-700/50 px-5 py-2.5 text-sm text-zinc-400 font-medium transition-colors hover:border-zinc-600 hover:text-zinc-200 hover:bg-zinc-800/50"
           >

@@ -27,7 +27,7 @@ export default function AccessPage() {
       }).then((res) => {
         if (res.ok) {
           // Cookie set by server — redirect to app
-          window.location.href = "/survey?step=0"
+          window.location.href = "/dashboard"
         } else {
           setError(true)
           setDigits(["", "", "", ""])

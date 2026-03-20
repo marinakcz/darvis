@@ -1,3 +1,4 @@
+// @ts-nocheck — DEPRECATED: This file is no longer used. All code has been moved to proper App Router routes.
 "use client"
 
 import { useSearchParams, useRouter } from "next/navigation"

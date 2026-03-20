@@ -223,7 +223,7 @@ export default function AdminFeedbackPage() {
             <Button variant="outline" size="sm" className="gap-1.5" onClick={exportJSON}>
               <Download className="size-3.5" /> Export
             </Button>
-            <a href="/survey?step=0" className="text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1">
+            <a href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1">
               <ArrowLeft className="size-3.5" /> Demo
             </a>
             <Button variant="outline" size="sm" className="gap-1.5 text-red-400 hover:text-red-300" onClick={handleLogout}>
