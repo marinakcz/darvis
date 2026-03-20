@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Target, Wrench, HelpCircle, Plus, ThumbsUp,
   Download, ArrowLeft, Check, Eye, Clock,
@@ -33,7 +32,7 @@ type KindTab = "all" | "general" | "pin"
 export default function AdminFeedbackPage() {
   const [authenticated, setAuthenticated] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
-  const [pinValue, setPinValue] = useState("")
+  const [pinDigits, setPinDigits] = useState(["", "", "", ""])
   const [pinError, setPinError] = useState(false)
 
   const [entries, setEntries] = useState<FeedbackEntry[]>([])
@@ -76,20 +75,42 @@ export default function AdminFeedbackPage() {
       .catch(() => setLoading(false))
   }
 
-  function handlePinSubmit() {
-    if (pinValue.length < 1) return
-    fetch("/api/admin/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin: pinValue }),
-    }).then((res) => {
-      if (res.ok) {
-        setAuthenticated(true)
-      } else {
-        setPinError(true)
-        setPinValue("")
-      }
-    })
+  function handlePinInput(index: number, value: string) {
+    const digit = value.replace(/\D/g, "").slice(-1)
+    const next = [...pinDigits]
+    next[index] = digit
+    setPinDigits(next)
+    setPinError(false)
+
+    if (digit && index < 3) {
+      document.getElementById(`adm-${index + 1}`)?.focus()
+    }
+
+    const fullPin = next.join("")
+    if (fullPin.length === 4 && next.every((d) => d !== "")) {
+      fetch("/api/admin/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: fullPin }),
+      }).then((res) => {
+        if (res.ok) {
+          setAuthenticated(true)
+        } else {
+          setPinError(true)
+          setPinDigits(["", "", "", ""])
+          setTimeout(() => document.getElementById("adm-0")?.focus(), 50)
+        }
+      })
+    }
+  }
+
+  function handlePinKeyDown(index: number, e: React.KeyboardEvent) {
+    if (e.key === "Backspace" && !pinDigits[index] && index > 0) {
+      document.getElementById(`adm-${index - 1}`)?.focus()
+      const next = [...pinDigits]
+      next[index - 1] = ""
+      setPinDigits(next)
+    }
   }
 
   async function handleLogout() {
@@ -98,7 +119,7 @@ export default function AdminFeedbackPage() {
     setLoaded(false)
     setEntries([])
     setAuthChecked(false)
-    setPinValue("")
+    setPinDigits(["", "", "", ""])
   }
 
   // PIN screen
@@ -108,19 +129,31 @@ export default function AdminFeedbackPage() {
         <div className="flex flex-col items-center gap-6 w-full max-w-sm px-6">
           <Lock className="size-8 text-zinc-600" />
           <h1 className="text-xl font-semibold text-zinc-200">Admin</h1>
-          <Input
-            type="password"
-            value={pinValue}
-            onChange={(e) => { setPinValue(e.target.value); setPinError(false) }}
-            onKeyDown={(e) => e.key === "Enter" && handlePinSubmit()}
-            placeholder="Kód"
-            className="h-12 text-center text-lg tracking-widest"
-            autoFocus
-          />
+
+          <div className="flex gap-3">
+            {pinDigits.map((digit, i) => (
+              <input
+                key={i}
+                id={`adm-${i}`}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit ? "\u2022" : ""}
+                onChange={(e) => handlePinInput(i, e.target.value)}
+                onKeyDown={(e) => handlePinKeyDown(i, e)}
+                autoFocus={i === 0}
+                className={`w-12 h-14 text-center text-xl rounded-xl border-2 bg-zinc-900 outline-none transition-all ${
+                  pinError
+                    ? "border-red-500/50 bg-red-500/5"
+                    : digit
+                      ? "border-zinc-500 bg-zinc-800"
+                      : "border-zinc-700 focus:border-zinc-500"
+                }`}
+              />
+            ))}
+          </div>
+
           {pinError && <p className="text-sm text-red-400">Nesprávný kód</p>}
-          <Button className="w-full h-11" onClick={handlePinSubmit} disabled={pinValue.length < 1}>
-            Vstoupit
-          </Button>
         </div>
       </div>
     )
