@@ -148,18 +148,9 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* Mobile: render directly with pin overlay support */}
-      <div className="flex flex-1 flex-col lg:hidden relative">
-        <div ref={contentRef} className="flex flex-1 flex-col overflow-y-auto relative">
-          <PinOverlay
-            active={pinMode}
-            pins={pins}
-            onAddPin={handleAddPin}
-            containerRef={contentRef}
-            onDeactivate={handleDeactivate}
-          />
-          {children}
-        </div>
+      {/* Mobile: render directly (pin overlay only on desktop for now) */}
+      <div className="flex flex-1 flex-col lg:hidden">
+        {children}
       </div>
 
       {/* Desktop: top bar + centered phone */}
