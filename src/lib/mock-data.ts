@@ -19,6 +19,8 @@ export interface MockJob {
   sentDate?: string
   /** Poznámka dispečera pro briefing */
   dispatcherNote?: string
+  /** Krátká rada pro technika v timeline */
+  hint?: string
 }
 
 /** Today's date for mock data: 2026-03-20 */
@@ -32,6 +34,7 @@ export const MOCK_JOBS: MockJob[] = [
     status: "survey", statusLabel: "Čeká na zaměření", price: "\u2014", statusColor: "text-blue-400",
     highlight: true, actionable: true, time: "09:00",
     dispatcherNote: "Klient preferuje dopolední termín. Pozor na úzké schodiště ve 2. patře.",
+    hint: "Přineste měřicí pásmo, půdorys k dispozici.",
   },
   {
     id: "kowalski", name: "Kowalski — Smíchov \u2192 Dejvice", client: "Anna Kowalski", phone: "+420 608 222 333",
@@ -96,6 +99,8 @@ export interface MockNotification {
   type: "approval" | "rejection" | "message" | "change" | "comment"
   title: string
   body: string
+  /** Akční doporučení — co by technik měl udělat */
+  hint?: string
   time: string // relative, e.g. "před 2 hod"
   read: boolean
   jobId?: string
@@ -115,11 +120,13 @@ export const MOCK_NOTIFICATIONS: MockNotification[] = [
   {
     id: "n1", type: "approval", title: "Svobodová schválila nabídku",
     body: "Nabídka 32 100 Kč byla schválena. Můžete naplánovat realizaci.",
+    hint: "Dobrá zpráva — nabídka přijata, vhodné odeslat potvrzení.",
     time: "před 2 hod", read: false, jobId: "svobodova",
   },
   {
     id: "n2", type: "message", title: "Dispečink: Kowalski přeplánován",
     body: "Termín zaměření přesunut z 27. 3. na 29. 3. — klientka požádala o změnu.",
+    hint: "Zkontrolujte kolize v programu na příští týden.",
     time: "před 5 hod", read: false, jobId: "kowalski",
   },
   {
