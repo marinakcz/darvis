@@ -1,0 +1,338 @@
+"use client"
+
+import { useSearchParams, useRouter } from "next/navigation"
+import { useState, useCallback } from "react"
+import Image from "next/image"
+import type { Job, SurveyMode } from "@/lib/types"
+import { Zap, FileText } from "lucide-react"
+import { createEmptyJob } from "@/lib/types"
+import { WizardNav } from "@/components/survey/wizard-nav"
+import { StepJobInfo } from "@/components/survey/step-job-info"
+import { StepInventory } from "@/components/survey/step-inventory"
+import { StepQuickRooms } from "@/components/survey/step-quick-rooms"
+import { StepMaterials } from "@/components/survey/step-materials"
+import { StepCalculation } from "@/components/survey/step-calculation"
+import { StepQuote } from "@/components/survey/step-quote"
+import { VolumeBar } from "@/components/inventory/volume-bar"
+import { PhoneFrame } from "@/components/phone-frame"
+import { Button } from "@/components/ui/button"
+
+const STORAGE_KEY = "darvis-job"
+
+function loadJob(): Job {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) return JSON.parse(saved)
+  } catch { /* ignore */ }
+  return createEmptyJob()
+}
+
+function saveJob(job: Job) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(job)) } catch { /* ignore */ }
+}
+
+/** Splash screen */
+function SplashScreen({ onContinue }: { onContinue: () => void }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
+      <div className="flex flex-col items-center gap-3">
+        <Image src="/logo.svg" alt="Darvis" width={200} height={54} className="h-14 w-auto" />
+        <p className="text-sm text-muted-foreground text-center">
+          Váš parťák pro zakázky
+        </p>
+      </div>
+      <Button size="lg" className="h-14 w-full max-w-[240px] text-base" onClick={onContinue}>
+        Přihlásit se
+      </Button>
+      <p className="text-[10px] text-muted-foreground font-mono pt-4">v0.1.0 — demo</p>
+    </div>
+  )
+}
+
+interface MockJob {
+  id: string
+  name: string
+  client: string
+  phone: string
+  pickup: string
+  delivery: string
+  distance: number
+  date: string
+  floor: { pickup: number; delivery: number }
+  elevator: { pickup: boolean; delivery: boolean }
+  status: string
+  price: string
+  statusColor: string
+  highlight?: boolean
+  actionable?: boolean
+}
+
+const MOCK_JOBS: MockJob[] = [
+  {
+    id: "dvorak", name: "Dvořák — Karlín → Modřany", client: "Petr Dvořák", phone: "+420 777 123 456",
+    pickup: "Křižíkova 42, Praha 8", delivery: "Levského 3112, Praha 4",
+    distance: 14, date: "2026-03-25", floor: { pickup: 3, delivery: 1 }, elevator: { pickup: false, delivery: true },
+    status: "Čeká na zaměření", price: "—", statusColor: "text-blue-400", highlight: true, actionable: true,
+  },
+]
+
+/** Dashboard with mock jobs */
+function DashboardScreen({ onNewJob, onLoadJob }: { onNewJob: (mode: SurveyMode) => void; onLoadJob: (mockJob: MockJob, mode: SurveyMode) => void }) {
+  const [view, setView] = useState<"list" | "mode-picker" | "detail">("list")
+  const [selectedJob, setSelectedJob] = useState<MockJob | null>(null)
+
+  if (view === "mode-picker") {
+    return (
+      <div className="flex flex-1 flex-col">
+        <header className="border-b bg-background px-4 py-3">
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setView("list")} className="text-muted-foreground text-sm">←</button>
+            <h1 className="text-lg font-semibold tracking-tight">Nová zakázka</h1>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 px-4 py-6">
+          <p className="text-sm text-muted-foreground">Jak chcete zaměřit?</p>
+          <button type="button" onClick={() => onNewJob("quick")} className="flex flex-col gap-2 rounded-xl border border-border p-4 text-left transition-colors hover:bg-accent">
+            <div className="flex items-center gap-2">
+              <Zap className="size-5" />
+              <span className="text-base font-semibold">Rychlý odhad</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Projdete místnosti a odhadnete % zaplnění auta. Rychlé, bez počítání kusů.</p>
+            <span className="text-xs text-muted-foreground font-mono">~2 min · telefon</span>
+          </button>
+          <button type="button" onClick={() => onNewJob("detailed")} className="flex flex-col gap-2 rounded-xl border border-border p-4 text-left transition-colors hover:bg-accent">
+            <div className="flex items-center gap-2">
+              <FileText className="size-5" />
+              <span className="text-base font-semibold">Detailní zaměření</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Soupis každé položky s kusy, službami a materiálem. Přesné, kompletní nabídka.</p>
+            <span className="text-xs text-muted-foreground font-mono">~10 min · tablet</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (view === "detail" && selectedJob) {
+    const dateFormatted = new Date(selectedJob.date).toLocaleDateString("cs-CZ", {
+      weekday: "short", day: "numeric", month: "long",
+    })
+    return (
+      <div className="flex flex-1 flex-col">
+        <header className="border-b bg-background px-4 py-3">
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setView("list")} className="text-muted-foreground text-sm">←</button>
+            <h1 className="text-lg font-semibold tracking-tight">Detail zakázky</h1>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 px-4 py-4">
+          {/* Status */}
+          <div className="flex items-center justify-between">
+            <span className={`text-sm font-medium ${selectedJob.statusColor}`}>{selectedJob.status}</span>
+            <span className="text-xs text-muted-foreground">{dateFormatted}</span>
+          </div>
+
+          {/* Client */}
+          <div className="rounded-lg border border-border p-3 flex flex-col gap-1.5">
+            <span className="text-xs text-muted-foreground uppercase tracking-wider">Klient</span>
+            <span className="text-sm font-medium">{selectedJob.client}</span>
+            <span className="text-sm text-muted-foreground">{selectedJob.phone}</span>
+          </div>
+
+          {/* Pickup */}
+          <div className="rounded-lg border border-border p-3 flex flex-col gap-1.5">
+            <span className="text-xs text-muted-foreground uppercase tracking-wider">Nakládka</span>
+            <span className="text-sm">{selectedJob.pickup}</span>
+            <span className="text-xs text-muted-foreground">
+              {selectedJob.floor.pickup}. patro{selectedJob.elevator.pickup ? " · výtah" : " · bez výtahu"}
+            </span>
+          </div>
+
+          {/* Delivery */}
+          <div className="rounded-lg border border-border p-3 flex flex-col gap-1.5">
+            <span className="text-xs text-muted-foreground uppercase tracking-wider">Vykládka</span>
+            <span className="text-sm">{selectedJob.delivery}</span>
+            <span className="text-xs text-muted-foreground">
+              {selectedJob.floor.delivery}. patro{selectedJob.elevator.delivery ? " · výtah" : " · bez výtahu"}
+            </span>
+          </div>
+
+          {/* Distance */}
+          <div className="flex justify-between text-sm px-1">
+            <span className="text-muted-foreground">Vzdálenost</span>
+            <span className="font-mono">{selectedJob.distance} km</span>
+          </div>
+
+          {/* Price if exists */}
+          {selectedJob.price !== "—" && (
+            <div className="flex justify-between text-sm px-1">
+              <span className="text-muted-foreground">Cena</span>
+              <span className="font-mono font-medium">{selectedJob.price}</span>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          {selectedJob.actionable && (
+            <div className="flex flex-col gap-2 pt-2">
+              <Button size="lg" className="h-14 text-base gap-2" onClick={() => onLoadJob(selectedJob, "quick")}>
+                <Zap className="size-4" /> Rychlé zaměření
+              </Button>
+              <Button variant="outline" size="lg" className="h-14 text-base gap-2" onClick={() => onLoadJob(selectedJob, "detailed")}>
+                <FileText className="size-4" /> Detailní zaměření
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <header className="border-b bg-background px-4 py-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold tracking-tight">Zakázky</h1>
+          <span className="text-xs text-muted-foreground font-mono">Jan T.</span>
+        </div>
+      </header>
+      <div className="flex flex-1 flex-col gap-3 px-4 py-4">
+        {MOCK_JOBS.map((job) => (
+          <button
+            key={job.id}
+            type="button"
+            onClick={() => { setSelectedJob(job); setView("detail") }}
+            className={`rounded-lg border p-3 text-left transition-colors hover:bg-accent ${job.highlight ? "border-blue-500/30 bg-blue-500/5" : "border-border"}`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-sm font-medium">{job.name}</span>
+              <span className="font-mono text-xs text-muted-foreground">{new Date(job.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric" })}</span>
+            </div>
+            <div className="flex items-center justify-between pt-1.5">
+              <span className={`text-xs font-medium ${job.statusColor}`}>{job.status}</span>
+              <span className="font-mono text-sm">{job.price}</span>
+            </div>
+          </button>
+        ))}
+        <Button size="lg" className="h-14 text-base mt-2" onClick={() => setView("mode-picker")}>
+          + Nová zakázka
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+/** Quick mode wizard nav labels */
+const QUICK_STEPS = [
+  { num: 1, label: "Zakázka" },
+  { num: 2, label: "Místnosti" },
+  { num: 3, label: "Materiál" },
+  { num: 4, label: "Kalkulace" },
+  { num: 5, label: "Nabídka" },
+]
+
+const DETAILED_STEPS = [
+  { num: 1, label: "Zakázka" },
+  { num: 2, label: "Inventář" },
+  { num: 3, label: "Materiál" },
+  { num: 4, label: "Kalkulace" },
+  { num: 5, label: "Nabídka" },
+]
+
+export default function SurveyContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const step = Number(searchParams.get("step") ?? 0)
+
+  const [job, setJobState] = useState<Job>(loadJob)
+
+  const setJob = useCallback((updater: Job | ((prev: Job) => Job)) => {
+    setJobState((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater
+      saveJob(next)
+      return next
+    })
+  }, [])
+
+  const goTo = useCallback(
+    (s: number) => router.push(`/survey?step=${s}`),
+    [router],
+  )
+
+  const handleNewJob = useCallback((mode: SurveyMode) => {
+    const empty = createEmptyJob(mode)
+    setJob(empty)
+    localStorage.removeItem(STORAGE_KEY)
+    goTo(1)
+  }, [setJob, goTo])
+
+  const handleNewJobFromQuote = useCallback(() => {
+    setJob(createEmptyJob())
+    localStorage.removeItem(STORAGE_KEY)
+    goTo(0)
+  }, [setJob, goTo])
+
+  const handleLoadJob = useCallback((mockJob: MockJob, mode: SurveyMode) => {
+    const prefilled = createEmptyJob(mode)
+    prefilled.client = { name: mockJob.client, phone: mockJob.phone, email: "" }
+    prefilled.pickup = { address: mockJob.pickup, floor: mockJob.floor.pickup, elevator: mockJob.elevator.pickup }
+    prefilled.delivery = { address: mockJob.delivery, floor: mockJob.floor.delivery, elevator: mockJob.elevator.delivery }
+    prefilled.distance = mockJob.distance
+    prefilled.date = mockJob.date
+    setJob(prefilled)
+    // Skip step 1 (job info already filled) → go to step 2
+    goTo(2)
+  }, [setJob, goTo])
+
+  let content: React.ReactNode
+
+  if (step === 0) {
+    content = <SplashScreen onContinue={() => goTo(-1)} />
+  } else if (step === -1) {
+    content = <DashboardScreen onNewJob={handleNewJob} onLoadJob={handleLoadJob} />
+  } else {
+    const isQuick = job.mode === "quick"
+    const steps = isQuick ? QUICK_STEPS : DETAILED_STEPS
+
+    let stepContent: React.ReactNode = null
+
+    if (isQuick) {
+      // Quick mode: 1=job, 2=rooms%, 3=materials, 4=calc, 5=quote
+      if (step === 1) stepContent = <StepJobInfo job={job} onChange={setJob} onNext={() => goTo(2)} />
+      if (step === 2) stepContent = <StepQuickRooms job={job} onChange={setJob} onNext={() => goTo(3)} onBack={() => goTo(1)} />
+      if (step === 3) stepContent = <StepMaterials job={job} onChange={setJob} onNext={() => goTo(4)} onBack={() => goTo(2)} />
+      if (step === 4) stepContent = <StepCalculation job={job} onNext={() => goTo(5)} onBack={() => goTo(3)} />
+      if (step === 5) stepContent = <StepQuote job={job} onBack={() => goTo(4)} onNewJob={handleNewJobFromQuote} />
+    } else {
+      // Detailed mode: 1=job, 2=inventory, 3=materials, 4=calc, 5=quote
+      if (step === 1) stepContent = <StepJobInfo job={job} onChange={setJob} onNext={() => goTo(2)} />
+      if (step === 2) stepContent = <StepInventory job={job} onChange={setJob} onNext={() => goTo(3)} onBack={() => goTo(1)} />
+      if (step === 3) stepContent = <StepMaterials job={job} onChange={setJob} onNext={() => goTo(4)} onBack={() => goTo(2)} />
+      if (step === 4) stepContent = <StepCalculation job={job} onNext={() => goTo(5)} onBack={() => goTo(3)} />
+      if (step === 5) stepContent = <StepQuote job={job} onBack={() => goTo(4)} onNewJob={handleNewJobFromQuote} />
+    }
+
+    content = (
+      <div className="flex flex-1 flex-col">
+        <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div className="mx-auto flex max-w-2xl flex-col gap-2 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-semibold tracking-tight">Darvis</h1>
+                <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono px-1.5 py-0.5 rounded bg-muted">
+                  {isQuick ? <><Zap className="size-3" /> rychlý</> : <><FileText className="size-3" /> detailní</>}
+                </span>
+              </div>
+              <VolumeBar job={job} />
+            </div>
+            <WizardNav currentStep={step} onStepClick={goTo} steps={steps} />
+          </div>
+        </header>
+        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6">
+          {stepContent}
+        </main>
+      </div>
+    )
+  }
+
+  return <PhoneFrame>{content}</PhoneFrame>
+}
