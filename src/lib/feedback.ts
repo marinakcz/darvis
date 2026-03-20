@@ -2,12 +2,25 @@ export type FeedbackType = "want" | "change" | "confusing" | "missing" | "love"
 
 export interface FeedbackEntry {
   id: string
-  type: FeedbackType
+  kind: "general" | "pin"
   message: string
+  type: FeedbackType | null
   page: string
+  x: number | null
+  y: number | null
+  scrollY: number | null
+  contentHeight: number | null
+  author: string | null
+  status: "new" | "read" | "in-progress" | "done"
+  note: string
+  resolution: string
   createdAt: string
-  author?: string
+  updatedAt: string
+  resolvedAt: string | null
 }
+
+/** Public-facing entry (admin fields stripped) */
+export type PublicFeedbackEntry = Omit<FeedbackEntry, "note" | "resolution" | "status">
 
 export const FEEDBACK_TYPES: Record<FeedbackType, { label: string; description: string; placeholder: string }> = {
   want: { label: "Chci tohle", description: "Funkce nebo chování, které potřebuji", placeholder: "Popište co byste chtěli, aby aplikace uměla…" },
@@ -17,43 +30,53 @@ export const FEEDBACK_TYPES: Record<FeedbackType, { label: string; description: 
   love: { label: "Líbí se", description: "Tohle je super, zachovejte", placeholder: "Co se vám líbí a chcete zachovat…" },
 }
 
-const STORAGE_KEY = "darvis-feedback"
-
-export function saveFeedback(entry: Omit<FeedbackEntry, "id" | "createdAt">): FeedbackEntry {
-  const full: FeedbackEntry = {
-    ...entry,
-    id: `fb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    createdAt: new Date().toISOString(),
-  }
-  const existing = loadFeedback()
-  existing.unshift(full)
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(existing))
-  } catch {
-    // ignore
-  }
-  return full
-}
-
-/** Save locally + send to server (fire-and-forget) */
-export function submitFeedback(entry: Omit<FeedbackEntry, "id" | "createdAt">): FeedbackEntry {
-  const saved = saveFeedback(entry)
+/** Submit general feedback (fire-and-forget) */
+export function submitFeedback(entry: {
+  type: FeedbackType
+  message: string
+  page: string
+  author?: string
+}): void {
   fetch("/api/feedback", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(entry),
+    body: JSON.stringify({
+      kind: "general",
+      type: entry.type,
+      message: entry.message,
+      page: entry.page,
+      author: entry.author || null,
+    }),
   }).catch(() => {
-    // offline fallback — localStorage already has it
+    // offline — silent fail
   })
-  return saved
 }
 
-export function loadFeedback(): FeedbackEntry[] {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY)
-    if (data) return JSON.parse(data)
-  } catch {
-    // ignore
-  }
-  return []
+/** Submit pin comment (fire-and-forget, returns promise for optimistic update) */
+export function submitPin(pin: {
+  message: string
+  page: string
+  x: number
+  y: number
+  scrollY: number
+  contentHeight: number
+  author?: string
+}): Promise<FeedbackEntry | null> {
+  return fetch("/api/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      kind: "pin",
+      message: pin.message,
+      page: pin.page,
+      x: pin.x,
+      y: pin.y,
+      scrollY: pin.scrollY,
+      contentHeight: pin.contentHeight,
+      author: pin.author || null,
+    }),
+  })
+    .then((r) => r.json())
+    .then((data) => (data.entry as FeedbackEntry) ?? null)
+    .catch(() => null)
 }

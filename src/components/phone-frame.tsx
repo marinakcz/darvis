@@ -1,8 +1,10 @@
 "use client"
 
-import { useSyncExternalStore, useCallback, useState } from "react"
+import { useSyncExternalStore, useCallback, useState, useRef } from "react"
 import { ClientTopBar } from "@/components/client-top-bar"
 import { PinOverlay } from "@/components/pin-overlay"
+import { submitPin } from "@/lib/feedback"
+import type { FeedbackEntry, PublicFeedbackEntry } from "@/lib/feedback"
 import { MessageSquarePlus, MessageSquareOff } from "lucide-react"
 
 const PHONE_W = 375
@@ -12,14 +14,56 @@ const TOTAL_W = PHONE_W + BEZEL
 const TOTAL_H = PHONE_H + BEZEL
 const TOP_BAR_H = 56
 
-interface Pin {
-  id: string
-  x: number
-  y: number
-  comment: string
-  author?: string | null
-  resolved: boolean
-  createdAt: string
+type AnyPin = FeedbackEntry | PublicFeedbackEntry
+
+// Global pin mode store (driven by events from FeedbackButton)
+let _pinMode = false
+const _listeners = new Set<() => void>()
+
+function setPinModeGlobal(value: boolean) {
+  _pinMode = value
+  _listeners.forEach((l) => l())
+}
+
+function subscribePinMode(cb: () => void) {
+  _listeners.add(cb)
+  // Listen for global events
+  const onEnable = () => setPinModeGlobal(true)
+  const onDisable = () => setPinModeGlobal(false)
+  window.addEventListener("darvis:pin-mode-on", onEnable)
+  window.addEventListener("darvis:pin-mode-off", onDisable)
+
+  // Keyboard shortcuts: Ctrl/Cmd+C = enable, Ctrl/Cmd+V = disable
+  const onKeyDown = (e: KeyboardEvent) => {
+    // Only intercept when not typing in input/textarea
+    const tag = (e.target as HTMLElement)?.tagName
+    if (tag === "INPUT" || tag === "TEXTAREA") return
+
+    if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+      e.preventDefault()
+      setPinModeGlobal(true)
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+      e.preventDefault()
+      setPinModeGlobal(false)
+    }
+  }
+  window.addEventListener("keydown", onKeyDown)
+
+  return () => {
+    _listeners.delete(cb)
+    window.removeEventListener("darvis:pin-mode-on", onEnable)
+    window.removeEventListener("darvis:pin-mode-off", onDisable)
+    window.removeEventListener("keydown", onKeyDown)
+  }
+}
+
+function usePinMode() {
+  return useSyncExternalStore(
+    subscribePinMode,
+    () => _pinMode,
+    () => false,
+  )
 }
 
 function usePhoneScale() {
@@ -42,38 +86,81 @@ function usePhoneScale() {
 
 export function PhoneFrame({ children }: { children: React.ReactNode }) {
   const scale = usePhoneScale()
-  const [pinMode, setPinMode] = useState(false)
-  const [pins, setPins] = useState<Pin[]>([])
+  const pinMode = usePinMode()
+  const [allPins, setAllPins] = useState<AnyPin[]>([])
   const [pinsLoaded, setPinsLoaded] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
 
-  // Load pins once
+  // Load all pins once
   if (!pinsLoaded) {
     setPinsLoaded(true)
-    fetch("/api/pins")
+    fetch("/api/feedback")
       .then((r) => r.json())
-      .then((data) => setPins(data))
-      .catch(() => {})
-  }
-
-  function handleAddPin(pin: { x: number; y: number; comment: string; page: string }) {
-    fetch("/api/pins", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pin),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.ok !== false) {
-          setPins((prev) => [...prev, data])
-        }
+      .then((data: AnyPin[]) => {
+        setAllPins(data.filter((e) => e.kind === "pin"))
       })
       .catch(() => {})
   }
 
+  // Filter pins by current page — use useSyncExternalStore to track URL changes
+  const currentPage = useSyncExternalStore(
+    useCallback((cb: () => void) => {
+      window.addEventListener("popstate", cb)
+      return () => window.removeEventListener("popstate", cb)
+    }, []),
+    () => window.location.pathname + window.location.search,
+    () => "",
+  )
+
+  const pins = allPins.filter((p) => p.page === currentPage)
+
+  function handleAddPin(pin: { x: number; y: number; scrollY: number; contentHeight: number; message: string; page: string }) {
+    // Optimistic: add temp pin
+    const tempId = `temp-${Date.now()}`
+    const tempPin: AnyPin = {
+      id: tempId,
+      kind: "pin",
+      message: pin.message,
+      type: null,
+      page: pin.page,
+      x: pin.x,
+      y: pin.y,
+      scrollY: pin.scrollY,
+      contentHeight: pin.contentHeight,
+      author: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      resolvedAt: null,
+    }
+    setAllPins((prev) => [...prev, tempPin])
+
+    submitPin(pin).then((saved) => {
+      if (saved) {
+        setAllPins((prev) => prev.map((p) => (p.id === tempId ? saved : p)))
+      }
+    })
+  }
+
+  function handleDeactivate() {
+    setPinModeGlobal(false)
+    window.dispatchEvent(new Event("darvis:pin-mode-off"))
+  }
+
   return (
     <>
-      {/* Mobile: render directly */}
-      <div className="flex flex-1 flex-col lg:hidden">{children}</div>
+      {/* Mobile: render directly with pin overlay support */}
+      <div className="flex flex-1 flex-col lg:hidden relative">
+        <div ref={contentRef} className="flex flex-1 flex-col overflow-y-auto relative">
+          <PinOverlay
+            active={pinMode}
+            pins={pins}
+            onAddPin={handleAddPin}
+            containerRef={contentRef}
+            onDeactivate={handleDeactivate}
+          />
+          {children}
+        </div>
+      </div>
 
       {/* Desktop: top bar + centered phone */}
       <div className="hidden lg:flex flex-1 flex-col bg-zinc-950">
@@ -101,11 +188,18 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
                   {/* Home indicator */}
                   <div className="absolute bottom-[6px] left-1/2 z-50 h-[5px] w-[130px] -translate-x-1/2 rounded-full bg-zinc-600" />
 
-                  {/* Pin overlay */}
-                  <PinOverlay active={pinMode} pins={pins} onAddPin={handleAddPin} />
-
-                  {/* Screen */}
-                  <div className="flex h-full flex-col overflow-y-auto overflow-x-hidden pt-[12px] pb-[20px]">
+                  {/* Screen — scrollable container with pins inside */}
+                  <div
+                    ref={contentRef}
+                    className="flex h-full flex-col overflow-y-auto overflow-x-hidden pt-[12px] pb-[20px] relative"
+                  >
+                    <PinOverlay
+                      active={pinMode}
+                      pins={pins}
+                      onAddPin={handleAddPin}
+                      containerRef={contentRef}
+                      onDeactivate={handleDeactivate}
+                    />
                     {children}
                   </div>
                 </div>
@@ -127,23 +221,35 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
                 localStorage.removeItem("darvis-job")
                 window.location.href = "/survey?step=0"
               }}
-              className="rounded-lg border border-zinc-700/50 px-5 py-2 text-sm text-zinc-400 font-medium transition-colors hover:border-zinc-600 hover:text-zinc-200 hover:bg-zinc-800/50"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-zinc-700/50 px-5 py-2.5 text-sm text-zinc-400 font-medium transition-colors hover:border-zinc-600 hover:text-zinc-200 hover:bg-zinc-800/50"
             >
               ↺ Začít znova
             </button>
-
-            {/* Pin mode toggle */}
             <button
               type="button"
-              onClick={() => setPinMode(!pinMode)}
-              className={`flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+              onClick={() => {
+                if (pinMode) {
+                  handleDeactivate()
+                } else {
+                  setPinModeGlobal(true)
+                }
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg border px-5 py-2.5 text-sm font-medium transition-colors ${
                 pinMode
                   ? "border-blue-500/50 bg-blue-500/10 text-blue-400"
                   : "border-zinc-700/50 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 hover:bg-zinc-800/50"
               }`}
             >
               {pinMode ? <MessageSquareOff className="size-4" /> : <MessageSquarePlus className="size-4" />}
-              {pinMode ? "Ukončit komentování" : "Komentovat"}
+              {pinMode ? "Ukončit" : "Komentář"}
+              <kbd className="inline-flex items-center gap-0.5 ml-1 text-[10px] text-zinc-500 font-mono">
+                <span className="rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 leading-none">
+                  {typeof navigator !== "undefined" && navigator.platform?.includes("Mac") ? "⌘" : "Ctrl"}
+                </span>
+                <span className="rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 leading-none">
+                  {pinMode ? "V" : "C"}
+                </span>
+              </kbd>
             </button>
           </div>
         </div>

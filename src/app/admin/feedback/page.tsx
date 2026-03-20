@@ -3,25 +3,14 @@
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Target, Wrench, HelpCircle, Plus, ThumbsUp,
   Download, ArrowLeft, Check, Eye, Clock,
-  Filter, Lock,
+  Filter, Lock, LogOut, MapPin, Loader2,
 } from "lucide-react"
 import type { ComponentType } from "react"
 import type { LucideProps } from "lucide-react"
-
-interface FeedbackEntry {
-  id: string
-  type: string
-  message: string
-  page: string
-  author?: string | null
-  status: string
-  note?: string
-  createdAt: string
-}
+import type { FeedbackEntry } from "@/lib/feedback"
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; Icon: ComponentType<LucideProps> }> = {
   want: { label: "Chci tohle", color: "bg-blue-500/10 text-blue-400 border-blue-500/20", Icon: Target },
@@ -34,53 +23,59 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; Icon: Componen
 const STATUS_CONFIG: Record<string, { label: string; color: string; Icon: ComponentType<LucideProps> }> = {
   new: { label: "Nový", color: "bg-blue-500/10 text-blue-400 border-blue-500/20", Icon: Clock },
   read: { label: "Přečtený", color: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20", Icon: Eye },
-  done: { label: "Zpracovaný", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", Icon: Check },
+  "in-progress": { label: "Řeší se", color: "bg-amber-500/10 text-amber-400 border-amber-500/20", Icon: Loader2 },
+  done: { label: "Hotovo", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", Icon: Check },
 }
 
-const ADMIN_PIN_KEY = "darvis-admin-pin"
+type KindTab = "all" | "general" | "pin"
 
 export default function AdminFeedbackPage() {
-  const [authenticated, setAuthenticated] = useState(() => {
-    if (typeof window === "undefined") return false
-    return sessionStorage.getItem(ADMIN_PIN_KEY) === "ok"
-  })
+  const [authenticated, setAuthenticated] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
   const [pinDigits, setPinDigits] = useState(["", "", "", ""])
   const [pinError, setPinError] = useState(false)
-  const pin = pinDigits.join("")
 
   const [entries, setEntries] = useState<FeedbackEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [loaded, setLoaded] = useState(false)
   const [filterType, setFilterType] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<string | null>(null)
+  const [kindTab, setKindTab] = useState<KindTab>("all")
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  // Load data after auth
+  // Check auth on mount by trying to fetch (cookie will be sent automatically)
+  if (!authChecked) {
+    setAuthChecked(true)
+    fetch("/api/feedback")
+      .then((r) => r.json())
+      .then((data: FeedbackEntry[]) => {
+        // If we get entries with 'note' field, we're admin
+        if (data.length > 0 && "note" in data[0]) {
+          setAuthenticated(true)
+          setEntries(data)
+          setLoading(false)
+          setLoaded(true)
+        } else if (data.length === 0) {
+          // Could be admin with no entries or public — try to verify
+          // We'll show PIN screen
+          setLoading(false)
+        } else {
+          setLoading(false)
+        }
+      })
+      .catch(() => setLoading(false))
+  }
+
+  // Load data after PIN auth
   if (authenticated && !loaded) {
     setLoaded(true)
     fetch("/api/feedback")
       .then((r) => r.json())
-      .then((data) => { setEntries(data); setLoading(false) })
+      .then((data: FeedbackEntry[]) => { setEntries(data); setLoading(false) })
       .catch(() => setLoading(false))
   }
 
-  async function handleLogin() {
-    const res = await fetch("/api/admin/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin }),
-    })
-    if (res.ok) {
-      sessionStorage.setItem(ADMIN_PIN_KEY, "ok")
-      setAuthenticated(true)
-      setPinError(false)
-    } else {
-      setPinError(true)
-    }
-  }
-
   function handlePinInput(index: number, value: string) {
-    // Only digits
     const digit = value.replace(/\D/g, "").slice(-1)
     const next = [...pinDigits]
     next[index] = digit
@@ -88,12 +83,10 @@ export default function AdminFeedbackPage() {
     setPinError(false)
 
     if (digit && index < 3) {
-      // Auto-focus next input
       const nextInput = document.getElementById(`pin-${index + 1}`)
       nextInput?.focus()
     }
 
-    // Auto-submit when all 6 filled
     const fullPin = next.join("")
     if (fullPin.length === 4 && next.every((d) => d !== "")) {
       fetch("/api/admin/verify", {
@@ -102,7 +95,6 @@ export default function AdminFeedbackPage() {
         body: JSON.stringify({ pin: fullPin }),
       }).then((res) => {
         if (res.ok) {
-          sessionStorage.setItem(ADMIN_PIN_KEY, "ok")
           setAuthenticated(true)
         } else {
           setPinError(true)
@@ -123,6 +115,15 @@ export default function AdminFeedbackPage() {
     }
   }
 
+  async function handleLogout() {
+    await fetch("/api/admin/logout", { method: "POST" })
+    setAuthenticated(false)
+    setLoaded(false)
+    setEntries([])
+    setAuthChecked(false)
+    setPinDigits(["", "", "", ""])
+  }
+
   // PIN screen
   if (!authenticated) {
     return (
@@ -134,7 +135,6 @@ export default function AdminFeedbackPage() {
             <p className="text-sm text-zinc-500 mt-1">4-místný přístupový kód</p>
           </div>
 
-          {/* PIN input boxes */}
           <div className="flex gap-3">
             {pinDigits.map((digit, i) => (
               <input
@@ -167,6 +167,8 @@ export default function AdminFeedbackPage() {
   }
 
   const filtered = entries.filter((e) => {
+    if (kindTab === "general" && e.kind !== "general") return false
+    if (kindTab === "pin" && e.kind !== "pin") return false
     if (filterType && e.type !== filterType) return false
     if (filterStatus && e.status !== filterStatus) return false
     return true
@@ -174,8 +176,11 @@ export default function AdminFeedbackPage() {
 
   const counts = {
     total: entries.length,
+    general: entries.filter((e) => e.kind === "general").length,
+    pin: entries.filter((e) => e.kind === "pin").length,
     new: entries.filter((e) => e.status === "new").length,
     read: entries.filter((e) => e.status === "read").length,
+    "in-progress": entries.filter((e) => e.status === "in-progress").length,
     done: entries.filter((e) => e.status === "done").length,
   }
 
@@ -183,22 +188,13 @@ export default function AdminFeedbackPage() {
     Object.keys(TYPE_CONFIG).map((t) => [t, entries.filter((e) => e.type === t).length])
   )
 
-  async function updateStatus(id: string, status: string) {
+  async function updateEntry(id: string, updates: { status?: string; note?: string; resolution?: string }) {
     await fetch("/api/feedback", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status }),
+      body: JSON.stringify({ id, ...updates }),
     })
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)))
-  }
-
-  async function updateNote(id: string, note: string) {
-    await fetch("/api/feedback", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, note }),
-    })
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, note } : e)))
+    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } as FeedbackEntry : e)))
   }
 
   function exportJSON() {
@@ -209,6 +205,11 @@ export default function AdminFeedbackPage() {
     a.download = `darvis-feedback-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  function contextLink(entry: FeedbackEntry): string | null {
+    if (entry.kind !== "pin" || !entry.page) return null
+    return entry.page
   }
 
   return (
@@ -227,34 +228,60 @@ export default function AdminFeedbackPage() {
             <a href="/survey?step=0" className="text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1">
               <ArrowLeft className="size-3.5" /> Demo
             </a>
+            <Button variant="outline" size="sm" className="gap-1.5 text-red-400 hover:text-red-300" onClick={handleLogout}>
+              <LogOut className="size-3.5" /> Odhlásit
+            </Button>
           </div>
+        </div>
+
+        {/* Kind tabs */}
+        <div className="flex gap-1 pb-4 border-b border-zinc-800 mb-4">
+          {([
+            { key: "all" as KindTab, label: "Vše", count: counts.total },
+            { key: "general" as KindTab, label: "Obecná", count: counts.general },
+            { key: "pin" as KindTab, label: "Piny", count: counts.pin },
+          ]).map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setKindTab(key)}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                kindTab === key ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+              }`}
+            >
+              {key === "pin" && <MapPin className="size-3.5" />}
+              {label}
+              <span className="font-mono text-xs text-zinc-600">{count}</span>
+            </button>
+          ))}
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-2 pb-4">
           <StatCard label="Nové" count={counts.new} active={filterStatus === "new"} onClick={() => setFilterStatus(filterStatus === "new" ? null : "new")} color="text-blue-400" />
           <StatCard label="Přečtené" count={counts.read} active={filterStatus === "read"} onClick={() => setFilterStatus(filterStatus === "read" ? null : "read")} color="text-zinc-400" />
-          <StatCard label="Hotové" count={counts.done} active={filterStatus === "done"} onClick={() => setFilterStatus(filterStatus === "done" ? null : "done")} color="text-emerald-400" />
-          <StatCard label="Celkem" count={counts.total} active={!filterStatus && !filterType} onClick={() => { setFilterStatus(null); setFilterType(null) }} color="text-zinc-300" />
+          <StatCard label="Řeší se" count={counts["in-progress"]} active={filterStatus === "in-progress"} onClick={() => setFilterStatus(filterStatus === "in-progress" ? null : "in-progress")} color="text-amber-400" />
+          <StatCard label="Hotovo" count={counts.done} active={filterStatus === "done"} onClick={() => setFilterStatus(filterStatus === "done" ? null : "done")} color="text-emerald-400" />
         </div>
 
-        {/* Type filters */}
-        <div className="flex items-center gap-1.5 pb-4 flex-wrap">
-          <Filter className="size-3.5 text-zinc-600 mr-1" />
-          {Object.entries(TYPE_CONFIG).map(([key, { label, Icon }]) => (
-            <button
-              key={key}
-              onClick={() => setFilterType(filterType === key ? null : key)}
-              className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-                filterType === key ? "bg-zinc-700 text-zinc-200" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
-              }`}
-            >
-              <Icon className="size-3" />
-              {label}
-              {typeCounts[key] > 0 && <span className="font-mono text-zinc-600 ml-0.5">{typeCounts[key]}</span>}
-            </button>
-          ))}
-        </div>
+        {/* Type filters (only for general tab or all) */}
+        {kindTab !== "pin" && (
+          <div className="flex items-center gap-1.5 pb-4 flex-wrap">
+            <Filter className="size-3.5 text-zinc-600 mr-1" />
+            {Object.entries(TYPE_CONFIG).map(([key, { label, Icon }]) => (
+              <button
+                key={key}
+                onClick={() => setFilterType(filterType === key ? null : key)}
+                className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                  filterType === key ? "bg-zinc-700 text-zinc-200" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                }`}
+              >
+                <Icon className="size-3" />
+                {label}
+                {typeCounts[key] > 0 && <span className="font-mono text-zinc-600 ml-0.5">{typeCounts[key]}</span>}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Loading / Empty */}
         {loading && <div className="rounded-lg border border-zinc-800 p-8 text-center text-zinc-500">Načítám...</div>}
@@ -268,11 +295,12 @@ export default function AdminFeedbackPage() {
         {!loading && (
           <div className="flex flex-col gap-2">
             {filtered.map((entry) => {
-              const typeConf = TYPE_CONFIG[entry.type] ?? { label: entry.type, color: "bg-zinc-800 text-zinc-400", Icon: HelpCircle }
+              const isPin = entry.kind === "pin"
+              const typeConf = entry.type ? (TYPE_CONFIG[entry.type] ?? { label: entry.type, color: "bg-zinc-800 text-zinc-400", Icon: HelpCircle }) : null
               const statusConf = STATUS_CONFIG[entry.status] ?? STATUS_CONFIG.new
               const date = new Date(entry.createdAt)
               const isExpanded = expandedId === entry.id
-              const TypeIcon = typeConf.Icon
+              const link = contextLink(entry)
 
               return (
                 <div
@@ -282,15 +310,26 @@ export default function AdminFeedbackPage() {
                   }`}
                   onClick={() => {
                     setExpandedId(isExpanded ? null : entry.id)
-                    if (entry.status === "new") updateStatus(entry.id, "read")
+                    if (entry.status === "new") updateEntry(entry.id, { status: "read" })
                   }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className={typeConf.color}>
-                        <TypeIcon className="size-3 mr-1" />
-                        {typeConf.label}
-                      </Badge>
+                      {isPin && (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                          <MapPin className="size-3 mr-1" />
+                          Pin
+                        </Badge>
+                      )}
+                      {typeConf && (() => {
+                        const TypeIcon = typeConf.Icon
+                        return (
+                          <Badge variant="outline" className={typeConf.color}>
+                            <TypeIcon className="size-3 mr-1" />
+                            {typeConf.label}
+                          </Badge>
+                        )
+                      })()}
                       <Badge variant="outline" className={statusConf.color}>{statusConf.label}</Badge>
                       {entry.author && <span className="text-xs text-zinc-500">{entry.author}</span>}
                     </div>
@@ -299,17 +338,37 @@ export default function AdminFeedbackPage() {
                     </span>
                   </div>
                   <p className="mt-2 text-sm leading-relaxed">{entry.message}</p>
+
+                  {/* Pin position info */}
+                  {isPin && entry.x !== null && entry.y !== null && (
+                    <p className="mt-1 text-xs text-zinc-600 font-mono">
+                      x: {entry.x.toFixed(1)}% y: {entry.y.toFixed(0)}px
+                    </p>
+                  )}
+
                   {entry.page && <p className="mt-1 text-xs text-zinc-600 font-mono">{entry.page}</p>}
+
+                  {/* Context link for pins */}
+                  {isPin && link && (
+                    <a
+                      href={link}
+                      className="mt-1 text-xs text-blue-400 hover:text-blue-300 inline-flex items-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Eye className="size-3" />
+                      Zobrazit v kontextu
+                    </a>
+                  )}
 
                   {isExpanded && (
                     <div className="mt-3 pt-3 border-t border-zinc-800 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs text-zinc-500">Stav:</span>
-                        {(["new", "read", "done"] as const).map((s) => {
+                        {(["new", "read", "in-progress", "done"] as const).map((s) => {
                           const sc = STATUS_CONFIG[s]
                           const SI = sc.Icon
                           return (
-                            <button key={s} onClick={() => updateStatus(entry.id, s)}
+                            <button key={s} onClick={() => updateEntry(entry.id, { status: s })}
                               className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${entry.status === s ? "bg-zinc-700 text-zinc-200" : "text-zinc-500 hover:bg-zinc-800"}`}>
                               <SI className="size-3" />{sc.label}
                             </button>
@@ -321,8 +380,19 @@ export default function AdminFeedbackPage() {
                         <textarea
                           value={entry.note || ""}
                           onChange={(e) => setEntries((prev) => prev.map((en) => en.id === entry.id ? { ...en, note: e.target.value } : en))}
-                          onBlur={(e) => updateNote(entry.id, e.target.value)}
+                          onBlur={(e) => updateEntry(entry.id, { note: e.target.value })}
                           placeholder="Přidat interní poznámku..."
+                          rows={2}
+                          className="w-full resize-none rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-zinc-700 focus:outline-none"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-zinc-500">Řešení:</span>
+                        <textarea
+                          value={entry.resolution || ""}
+                          onChange={(e) => setEntries((prev) => prev.map((en) => en.id === entry.id ? { ...en, resolution: e.target.value } : en))}
+                          onBlur={(e) => updateEntry(entry.id, { resolution: e.target.value })}
+                          placeholder="Jak bylo vyřešeno..."
                           rows={2}
                           className="w-full resize-none rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-zinc-700 focus:outline-none"
                         />

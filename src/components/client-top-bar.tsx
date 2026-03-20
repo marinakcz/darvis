@@ -43,7 +43,7 @@ function AdminPinModal({ open, onClose }: { open: boolean; onClose: () => void }
         body: JSON.stringify({ pin: fullPin }),
       }).then((res) => {
         if (res.ok) {
-          sessionStorage.setItem("darvis-admin-pin", "ok")
+          // Cookie is set by server response
           window.location.href = "/admin/feedback"
         } else {
           setError(true)
@@ -106,12 +106,9 @@ export function ClientTopBar() {
   const [showPin, setShowPin] = useState(false)
 
   function handleAdminClick() {
-    // If already authenticated in this session, go directly
-    if (sessionStorage.getItem("darvis-admin-pin") === "ok") {
-      window.location.href = "/admin/feedback"
-    } else {
-      setShowPin(true)
-    }
+    // Try fetching feedback — if cookie is valid, we'll get admin data
+    // For now just show PIN modal; the cookie handles auth on the admin page
+    setShowPin(true)
   }
 
   return (

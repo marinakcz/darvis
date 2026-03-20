@@ -9,16 +9,12 @@ import {
   submitFeedback,
 } from "@/lib/feedback"
 import { FeedbackIcon } from "@/components/icons"
-import { MessageCircle, X, ArrowLeft, Check } from "lucide-react"
-
-export function openFeedbackModal() {
-  window.dispatchEvent(new Event("darvis:open-feedback"))
-}
+import { MessageCircle, X, ArrowLeft, Check, MapPin } from "lucide-react"
 
 export function FeedbackButton() {
   const [open, setOpen] = useState(false)
 
-  // Register global listener
+  // Register global listener for opening the modal
   if (typeof window !== "undefined") {
     ;(window as unknown as { __darvisFb?: () => void }).__darvisFb?.()
     const handler = () => setOpen(true)
@@ -44,6 +40,12 @@ export function FeedbackButton() {
     setStep("form")
   }
 
+  function handlePinMode() {
+    // Close modal, activate pin mode via global event
+    reset()
+    window.dispatchEvent(new Event("darvis:pin-mode-on"))
+  }
+
   function handleSubmit() {
     if (!type || message.length < 3) return
     submitFeedback({
@@ -54,6 +56,11 @@ export function FeedbackButton() {
     })
     setStep("done")
     setTimeout(reset, 2500)
+  }
+
+  // Hide on admin routes
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
+    return null
   }
 
   return (
@@ -101,6 +108,17 @@ export function FeedbackButton() {
                       )
                     },
                   )}
+
+                  {/* 6th option: Pin mode */}
+                  <button
+                    type="button"
+                    onClick={handlePinMode}
+                    className="flex flex-col items-start gap-1 rounded-xl border border-blue-500/30 bg-blue-500/5 p-3 text-left transition-colors hover:bg-blue-500/10 hover:border-blue-500/50 col-span-2"
+                  >
+                    <MapPin className="size-5 text-blue-400" />
+                    <span className="text-sm font-medium text-blue-300">Komentovat v aplikaci</span>
+                    <span className="text-[11px] text-zinc-500 leading-tight">Klikněte kamkoliv v aplikaci a přidejte komentář</span>
+                  </button>
                 </div>
               </div>
             )}
