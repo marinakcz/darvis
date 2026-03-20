@@ -7,6 +7,7 @@ import {
   Target, Wrench, HelpCircle, Plus, ThumbsUp,
   Download, ArrowLeft, Check, Eye, Clock,
   Filter, Lock, LogOut, MapPin, Loader2, Trash2,
+  MessageSquare,
 } from "lucide-react"
 import type { ComponentType } from "react"
 import type { LucideProps } from "lucide-react"
@@ -235,6 +236,23 @@ export default function AdminFeedbackPage() {
               <LogOut className="size-3.5" /> Odhlásit
             </Button>
           </div>
+        </div>
+
+        {/* Admin nav */}
+        <div className="flex gap-1 pb-4 border-b border-zinc-800 mb-4">
+          <span
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium bg-zinc-800 text-zinc-200 min-h-[44px]"
+          >
+            <MessageSquare className="size-3.5" />
+            Zpetna vazba
+          </span>
+          <a
+            href="/admin/pipeline"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
+          >
+            <Clock className="size-3.5" />
+            Pipeline
+          </a>
         </div>
 
         {/* Kind tabs */}
