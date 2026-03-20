@@ -1,5 +1,17 @@
 export type SurveyMode = "quick" | "detailed"
 
+export type JobType = "apartment" | "office" | "heavy" | "art" | "international"
+
+export const JOB_TYPE_LABELS: Record<JobType, string> = {
+  apartment: "Byt / Dům",
+  office: "Kancelář / Firma",
+  heavy: "Těžké břemeno",
+  art: "Umělecké předměty",
+  international: "Mezinárodní",
+}
+
+export type VehicleId = "small" | "medium" | "large"
+
 export type RoomType =
   | "bedroom"
   | "living"
@@ -26,6 +38,8 @@ export const ROOM_LABELS: Record<RoomType, string> = {
 
 export interface Job {
   mode: SurveyMode
+  jobType: JobType
+  vehicleId: VehicleId
   client: { name: string; phone: string; email: string }
   pickup: { address: string; floor: number; elevator: boolean }
   delivery: { address: string; floor: number; elevator: boolean }
@@ -66,6 +80,8 @@ export interface CatalogItem {
   category: ItemCategory
   volume: number // m³
   defaultServices: { disassembly: boolean; packing: boolean; assembly: boolean }
+  requires?: string[]
+  suggests?: string[]
 }
 
 export type ItemCategory = "furniture" | "electronics" | "fragile" | "other"
@@ -122,6 +138,8 @@ export interface Calculation {
 export function createEmptyJob(mode: SurveyMode = "detailed"): Job {
   return {
     mode,
+    jobType: "apartment",
+    vehicleId: "medium",
     client: { name: "", phone: "", email: "" },
     pickup: { address: "", floor: 0, elevator: false },
     delivery: { address: "", floor: 0, elevator: false },

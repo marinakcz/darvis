@@ -8,7 +8,7 @@ import { getCatalogItem } from "@/lib/catalog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
+import { X, Info } from "lucide-react"
 import { ItemPicker } from "./item-picker"
 import { ItemRow } from "./item-row"
 
@@ -20,6 +20,7 @@ interface RoomPanelProps {
 
 export function RoomPanel({ room, onUpdate, onRemove }: RoomPanelProps) {
   const [showItemPicker, setShowItemPicker] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
   const Icon = RoomIcon[room.type]
 
   const totalVolume = room.items.reduce((sum, item) => {
@@ -48,7 +49,34 @@ export function RoomPanel({ room, onUpdate, onRemove }: RoomPanelProps) {
           assembly: false,
         },
       }
-      onUpdate((r) => ({ ...r, items: [...r.items, newItem] }))
+
+      // Auto-add required items
+      const requiredItems: InventoryItem[] = []
+      const addedNames: string[] = []
+      if (cat?.requires) {
+        for (const reqId of cat.requires) {
+          const alreadyExists = room.items.some((i) => i.catalogId === reqId)
+          if (!alreadyExists) {
+            const reqCat = getCatalogItem(reqId)
+            if (reqCat) {
+              requiredItems.push({
+                id: `item-${Date.now()}-${reqId}`,
+                catalogId: reqId,
+                quantity: 1,
+                services: reqCat.defaultServices,
+              })
+              addedNames.push(reqCat.name)
+            }
+          }
+        }
+      }
+
+      onUpdate((r) => ({ ...r, items: [...r.items, newItem, ...requiredItems] }))
+
+      if (addedNames.length > 0) {
+        setToast(`Automaticky přidáno: ${addedNames.join(", ")}`)
+        setTimeout(() => setToast(null), 3000)
+      }
     }
     setShowItemPicker(false)
   }
@@ -88,6 +116,12 @@ export function RoomPanel({ room, onUpdate, onRemove }: RoomPanelProps) {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-2">
+        {toast && (
+          <div className="flex items-center gap-2 rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary">
+            <Info className="size-3.5 shrink-0" />
+            <span>{toast}</span>
+          </div>
+        )}
         {room.items.map((item) => (
           <ItemRow
             key={item.id}

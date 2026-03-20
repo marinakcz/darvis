@@ -1,23 +1,74 @@
 "use client"
 
-import type { Job, MaterialOrder } from "@/lib/types"
+import type { Job, MaterialOrder, VehicleId } from "@/lib/types"
 import { ROOM_LABELS, MATERIAL_LABELS, MATERIAL_UNITS } from "@/lib/types"
+import { VEHICLES } from "@/lib/constants"
 import { calculateJob, formatPrice, formatVolume } from "@/lib/calculator"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Truck } from "lucide-react"
+
+/** Auto-select vehicle based on total volume */
+function autoSelectVehicle(totalVolume: number): VehicleId {
+  if (totalVolume <= 15) return "small"
+  if (totalVolume <= 20) return "medium"
+  return "large"
+}
 
 interface StepCalculationProps {
   job: Job
+  onChange: (updater: (prev: Job) => Job) => void
   onNext: () => void
   onBack: () => void
 }
 
-export function StepCalculation({ job, onNext, onBack }: StepCalculationProps) {
+export function StepCalculation({ job, onChange, onNext, onBack }: StepCalculationProps) {
   const calc = calculateJob(job)
+  const suggestedVehicle = autoSelectVehicle(calc.totalVolume)
+
+  function selectVehicle(vehicleId: VehicleId) {
+    onChange((prev) => ({ ...prev, vehicleId }))
+  }
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Vehicle selector */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Truck className="size-4" />
+            Typ vozu
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            {VEHICLES.map((vehicle) => {
+              const isActive = job.vehicleId === vehicle.id
+              const isSuggested = suggestedVehicle === vehicle.id
+              return (
+                <button
+                  key={vehicle.id}
+                  type="button"
+                  onClick={() => selectVehicle(vehicle.id)}
+                  className={`flex flex-1 flex-col items-center gap-1 rounded-lg border px-2 py-3 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                    isActive
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  <span className="text-sm font-medium">{vehicle.name}</span>
+                  <span className="text-xs font-mono">{formatPrice(vehicle.rate)}</span>
+                  {isSuggested && !isActive && (
+                    <span className="text-[10px] text-muted-foreground">doporučeno</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Overview */}
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Objem" value={formatVolume(calc.totalVolume)} />

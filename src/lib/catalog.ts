@@ -4,8 +4,8 @@ export const CATALOG: CatalogItem[] = [
   // Nábytek
   { id: "wardrobe-large", name: "Skříň velká", category: "furniture", volume: 1.2, defaultServices: { disassembly: true, packing: false, assembly: true } },
   { id: "wardrobe-small", name: "Skříň malá", category: "furniture", volume: 0.6, defaultServices: { disassembly: true, packing: false, assembly: true } },
-  { id: "bed-double", name: "Postel dvoulůžko", category: "furniture", volume: 1.2, defaultServices: { disassembly: true, packing: false, assembly: true } },
-  { id: "bed-single", name: "Postel jednolůžko", category: "furniture", volume: 0.8, defaultServices: { disassembly: true, packing: false, assembly: true } },
+  { id: "bed-double", name: "Postel dvoulůžko", category: "furniture", volume: 1.2, defaultServices: { disassembly: true, packing: false, assembly: true }, requires: ["mattress"] },
+  { id: "bed-single", name: "Postel jednolůžko", category: "furniture", volume: 0.8, defaultServices: { disassembly: true, packing: false, assembly: true }, requires: ["mattress"] },
   { id: "mattress", name: "Matrace", category: "furniture", volume: 0.4, defaultServices: { disassembly: false, packing: true, assembly: false } },
   { id: "sofa-large", name: "Pohovka / Gauč", category: "furniture", volume: 1.5, defaultServices: { disassembly: false, packing: true, assembly: false } },
   { id: "sofa-small", name: "Křeslo", category: "furniture", volume: 0.5, defaultServices: { disassembly: false, packing: false, assembly: false } },

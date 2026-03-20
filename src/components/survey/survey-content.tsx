@@ -443,14 +443,14 @@ export default function SurveyContent() {
       if (step === 1) stepContent = <StepJobInfo job={job} onChange={setJob} onNext={() => goTo(2)} />
       if (step === 2) stepContent = <StepQuickRooms job={job} onChange={setJob} onNext={() => goTo(3)} onBack={() => goTo(1)} />
       if (step === 3) stepContent = <StepMaterials job={job} onChange={setJob} onNext={() => goTo(4)} onBack={() => goTo(2)} />
-      if (step === 4) stepContent = <StepCalculation job={job} onNext={() => goTo(5)} onBack={() => goTo(3)} />
+      if (step === 4) stepContent = <StepCalculation job={job} onChange={setJob} onNext={() => goTo(5)} onBack={() => goTo(3)} />
       if (step === 5) stepContent = <StepQuote job={job} onBack={() => goTo(4)} onNewJob={handleNewJobFromQuote} />
     } else {
       // Detailed mode: 1=job, 2=inventory, 3=materials, 4=calc, 5=quote
       if (step === 1) stepContent = <StepJobInfo job={job} onChange={setJob} onNext={() => goTo(2)} />
       if (step === 2) stepContent = <StepInventory job={job} onChange={setJob} onNext={() => goTo(3)} onBack={() => goTo(1)} />
       if (step === 3) stepContent = <StepMaterials job={job} onChange={setJob} onNext={() => goTo(4)} onBack={() => goTo(2)} />
-      if (step === 4) stepContent = <StepCalculation job={job} onNext={() => goTo(5)} onBack={() => goTo(3)} />
+      if (step === 4) stepContent = <StepCalculation job={job} onChange={setJob} onNext={() => goTo(5)} onBack={() => goTo(3)} />
       if (step === 5) stepContent = <StepQuote job={job} onBack={() => goTo(4)} onNewJob={handleNewJobFromQuote} />
     }
 

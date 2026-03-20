@@ -1,8 +1,8 @@
 import type { Job, Calculation, MaterialOrder } from "./types"
 import { getCatalogItem } from "./catalog"
 import {
+  VEHICLES,
   TRUCK_CAPACITY,
-  TRUCK_RATE,
   WORKER_HOURLY_RATE,
   BASE_WORKERS_PER_TRUCK,
   HOURS_PER_CUBIC_METER,
@@ -19,13 +19,18 @@ import {
 } from "./constants"
 
 export function calculateJob(job: Job): Calculation {
+  // Resolve selected vehicle (fallback to medium)
+  const vehicle = VEHICLES.find((v) => v.id === job.vehicleId) ?? VEHICLES[1]
+  const vehicleCapacity = vehicle.capacity
+  const vehicleRate = vehicle.rate
+
   let totalVolume: number
   let servicesCost = 0
 
   if (job.mode === "quick") {
     // Martin mód — % odhad
     const totalPercent = job.quickRooms.reduce((sum, r) => sum + r.percent, 0)
-    totalVolume = (totalPercent / 100) * TRUCK_CAPACITY
+    totalVolume = (totalPercent / 100) * vehicleCapacity
   } else {
     // Richard mód — katalogové položky
     totalVolume = 0
@@ -42,7 +47,7 @@ export function calculateJob(job: Job): Calculation {
   }
 
   // Počet aut
-  const truckCount = Math.max(1, Math.ceil(totalVolume / TRUCK_CAPACITY))
+  const truckCount = Math.max(1, Math.ceil(totalVolume / vehicleCapacity))
 
   // Pracovníci
   const workerCount = truckCount * BASE_WORKERS_PER_TRUCK
@@ -76,7 +81,7 @@ export function calculateJob(job: Job): Calculation {
       }
 
   // Cena
-  const trucksCost = truckCount * TRUCK_RATE
+  const trucksCost = truckCount * vehicleRate
   const laborCost = workerCount * estimatedHours * WORKER_HOURLY_RATE
   const materialsCost =
     materials.boxes * MATERIAL_RATES.box +

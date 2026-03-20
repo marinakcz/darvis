@@ -1,11 +1,23 @@
 "use client"
 
-import type { Job } from "@/lib/types"
+import type { Job, JobType } from "@/lib/types"
+import { JOB_TYPE_LABELS } from "@/lib/types"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Home, Building2, Weight, Palette, Globe } from "lucide-react"
+
+const JOB_TYPE_ICONS: Record<JobType, typeof Home> = {
+  apartment: Home,
+  office: Building2,
+  heavy: Weight,
+  art: Palette,
+  international: Globe,
+}
+
+const JOB_TYPE_ORDER: JobType[] = ["apartment", "office", "heavy", "art", "international"]
 
 interface StepJobInfoProps {
   job: Job
@@ -34,6 +46,38 @@ export function StepJobInfo({ job, onChange, onNext }: StepJobInfoProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Job type selector */}
+      <section aria-labelledby="section-job-type">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle id="section-job-type" className="text-base">Typ zakázky</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {JOB_TYPE_ORDER.map((type) => {
+                const Icon = JOB_TYPE_ICONS[type]
+                const isActive = job.jobType === type
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => onChange((prev) => ({ ...prev, jobType: type }))}
+                    className={`flex shrink-0 flex-col items-center gap-1.5 rounded-lg border px-3 py-2.5 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                      isActive
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <Icon className="size-5" />
+                    <span className="text-xs font-medium whitespace-nowrap">{JOB_TYPE_LABELS[type]}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       <section aria-labelledby="section-client">
       <Card>
         <CardHeader className="pb-3">
@@ -84,7 +128,7 @@ export function StepJobInfo({ job, onChange, onNext }: StepJobInfoProps) {
       {/* Vzdálenost a termín */}
       <Card>
         <CardContent className="flex flex-col gap-4 pt-6">
-          <FieldRow label="Vzdálenost (km)">
+          <FieldRow label="Vzdálenost nakládka → vykládka (km)">
             <Input
               type="number"
               inputMode="numeric"
@@ -95,6 +139,9 @@ export function StepJobInfo({ job, onChange, onNext }: StepJobInfoProps) {
               }
               placeholder="25"
             />
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Centrála: U Pekařky 484/1a, Praha 8
+            </p>
           </FieldRow>
           <FieldRow label="Termín stěhování">
             <Input

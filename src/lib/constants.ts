@@ -1,11 +1,19 @@
 // Ceníkové konstanty – Stěhování Praha
 // Všechny ceny v Kč
 
-/** Kapacita jednoho stěhovacího vozu v m³ */
+/** @deprecated Použij VEHICLES[].capacity */
 export const TRUCK_CAPACITY = 20
 
-/** Cena za jedno auto (výjezd + amortizace) */
+/** @deprecated Použij VEHICLES[].rate */
 export const TRUCK_RATE = 3500
+
+export const VEHICLES = [
+  { id: "small", name: "Dodávka 15 m³", capacity: 15, rate: 2500 },
+  { id: "medium", name: "Nákladní 20 m³", capacity: 20, rate: 3500 },
+  { id: "large", name: "Nákladní 24 m³", capacity: 24, rate: 4200 },
+] as const
+
+export type VehicleId = typeof VEHICLES[number]["id"]
 
 /** Hodinová sazba za jednoho pracovníka */
 export const WORKER_HOURLY_RATE = 450
@@ -52,3 +60,10 @@ export const SERVICE_RATE_ASSEMBLY = 300
 
 /** Minimální cena zakázky */
 export const MIN_PRICE = 3000
+
+/** Centrála — výchozí bod trasy */
+export const DEPOT = {
+  address: "U Pekařky 484/1a, Praha 8",
+  lat: 50.1087,
+  lng: 14.4477,
+} as const
