@@ -16,7 +16,7 @@ interface PinOverlayProps {
 }
 
 export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate }: PinOverlayProps) {
-  const [newPin, setNewPin] = useState<{ x: number; y: number; screenX: number; screenY: number } | null>(null)
+  const [newPin, setNewPin] = useState<{ x: number; y: number } | null>(null)
   const [comment, setComment] = useState("")
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [showResolved, setShowResolved] = useState(false)
@@ -37,8 +37,7 @@ export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate 
     // Y = scroll-relative: scrollTop + click position relative to container top
     const y = container.scrollTop + (e.clientY - rect.top)
 
-    // Store both content-relative (for pin marker) and viewport (for form positioning)
-    setNewPin({ x, y, screenX: e.clientX, screenY: e.clientY })
+    setNewPin({ x, y })
     setComment("")
   }
 
@@ -123,12 +122,12 @@ export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate 
             </div>
           </div>
 
-          {/* Comment form — fixed to viewport so it doesn't clip */}
+          {/* Comment form — positioned next to the pin */}
           <div
-            className="fixed z-[100] w-56"
+            className="absolute z-[60] w-56"
             style={{
-              left: Math.min(newPin.screenX + 16, window.innerWidth - 240),
-              top: Math.max(newPin.screenY - 80, 16),
+              left: `${Math.min(newPin.x + 4, 40)}%`,
+              top: `${newPin.y - 10}px`,
             }}
           >
             <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-3 shadow-xl">
