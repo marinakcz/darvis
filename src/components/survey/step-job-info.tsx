@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useState } from "react"
-import { Home, Building2, Weight, Palette, Globe, Navigation2 } from "lucide-react"
+import { Home, Building2, Weight, Palette, Globe, Navigation2, ChevronDown, ChevronUp } from "lucide-react"
 import { NavigationSheet } from "@/components/navigation-sheet"
 
 const JOB_TYPE_ICONS: Record<JobType, typeof Home> = {
@@ -72,82 +72,13 @@ export function StepJobInfo({ job, onChange, onNext, readonly }: StepJobInfoProp
 
   if (readonly) {
     return (
-      <div className="flex flex-col gap-6">
-        {/* Readonly CRM data */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base text-muted-foreground">Udaje zakazky</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-0 -mt-2">
-            <ReadonlyRow label="Klient" value={job.client.name} />
-            <ReadonlyRow label="Telefon" value={job.client.phone} />
-            {job.client.email ? <ReadonlyRow label="Email" value={job.client.email} /> : null}
-            <div className="border-t border-border my-2" />
-            <div className="flex items-center justify-between gap-2 py-2">
-              <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                <span className="text-xs text-muted-foreground">Nakladka</span>
-                <span className="text-sm">{job.pickup.address || "\u2014"}</span>
-                <span className="text-xs text-muted-foreground/70">{job.pickup.floor}. patro{job.pickup.elevator ? " · vytah" : " · bez vytahu"}</span>
-              </div>
-              {job.pickup.address && (
-                <button
-                  type="button"
-                  onClick={() => _openNavigation(job.pickup.address)}
-                  className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-primary shrink-0 min-h-[36px] hover:bg-accent active:bg-accent transition-colors"
-                >
-                  <Navigation2 className="size-3.5" />
-                  <span>Navigovat</span>
-                </button>
-              )}
-            </div>
-            <div className="flex items-center justify-between gap-2 py-2">
-              <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                <span className="text-xs text-muted-foreground">Vykladka</span>
-                <span className="text-sm">{job.delivery.address || "\u2014"}</span>
-                <span className="text-xs text-muted-foreground/70">{job.delivery.floor}. patro{job.delivery.elevator ? " · vytah" : " · bez vytahu"}</span>
-              </div>
-              {job.delivery.address && (
-                <button
-                  type="button"
-                  onClick={() => _openNavigation(job.delivery.address)}
-                  className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-primary shrink-0 min-h-[36px] hover:bg-accent active:bg-accent transition-colors"
-                >
-                  <Navigation2 className="size-3.5" />
-                  <span>Navigovat</span>
-                </button>
-              )}
-            </div>
-            <div className="border-t border-border my-2" />
-            <ReadonlyRow label="Vzdalenost" value={`${job.distance} km`} />
-            <ReadonlyRow label="Termin" value={job.date ? new Date(job.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "long", year: "numeric" }) : "\u2014"} />
-            <ReadonlyRow label="Typ" value={JOB_TYPE_LABELS[job.jobType]} />
-          </CardContent>
-        </Card>
-
-        {/* Technician notes — editable even in readonly mode */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Poznamky technika</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <textarea
-              value={job.technicianNotes || ""}
-              onChange={(e) => onChange((prev) => ({ ...prev, technicianNotes: e.target.value }))}
-              placeholder="Vlastni poznamky k zakazce..."
-              className="w-full min-h-[80px] rounded-lg border border-input bg-transparent px-2.5 py-2.5 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 resize-y"
-            />
-          </CardContent>
-        </Card>
-
-        {/* Access & risks */}
-        <AccessRisksCard access={job.access} onUpdate={updateAccess} />
-
-        <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
-          <Button size="lg" className="h-14 w-full text-base" onClick={onNext}>
-            {nextLabel} &rarr;
-          </Button>
-        </div>
-      </div>
+      <ReadonlyJobInfo
+        job={job}
+        onChange={onChange}
+        onNext={onNext}
+        nextLabel={nextLabel}
+        updateAccess={updateAccess}
+      />
     )
   }
 
@@ -264,6 +195,120 @@ export function StepJobInfo({ job, onChange, onNext, readonly }: StepJobInfoProp
 
       {/* Access & risks */}
       <AccessRisksCard access={job.access} onUpdate={updateAccess} />
+
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
+        <Button size="lg" className="h-14 w-full text-base" onClick={onNext}>
+          {nextLabel} &rarr;
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+/** Collapsible readonly view — optimized for field technician */
+function ReadonlyJobInfo({ job, onChange, onNext, nextLabel, updateAccess }: {
+  job: Job
+  onChange: (updater: (prev: Job) => Job) => void
+  onNext: () => void
+  nextLabel: string
+  updateAccess: (field: keyof JobAccess, value: JobAccess[keyof JobAccess]) => void
+}) {
+  const [crmExpanded, setCrmExpanded] = useState(false)
+  const [accessExpanded, setAccessExpanded] = useState(false)
+
+  // Build one-line summary: "Dvořák · Karlín → Modřany · 14 km"
+  const pickupShort = job.pickup.address ? job.pickup.address.split(",")[0] : ""
+  const deliveryShort = job.delivery.address ? job.delivery.address.split(",")[0] : ""
+  const summaryParts = [
+    job.client.name,
+    pickupShort && deliveryShort ? `${pickupShort} \u2192 ${deliveryShort}` : pickupShort || deliveryShort,
+    job.distance > 0 ? `${job.distance} km` : null,
+  ].filter(Boolean)
+  const summary = summaryParts.join(" \u00b7 ")
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* CRM data — collapsed by default, one-line summary */}
+      <button
+        type="button"
+        onClick={() => setCrmExpanded((prev) => !prev)}
+        className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <span className="text-sm font-medium truncate flex-1 min-w-0">{summary}</span>
+        {crmExpanded ? <ChevronUp className="size-4 text-muted-foreground shrink-0 ml-2" /> : <ChevronDown className="size-4 text-muted-foreground shrink-0 ml-2" />}
+      </button>
+
+      {crmExpanded && (
+        <div className="rounded-2xl border border-border bg-muted/30 overflow-hidden divide-y divide-border">
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-xs text-muted-foreground">Klient</span>
+            <span className="text-sm">{job.client.name}</span>
+          </div>
+          {job.client.phone && (
+            <div className="flex items-center justify-between px-4 py-2.5">
+              <span className="text-xs text-muted-foreground">Telefon</span>
+              <span className="text-sm">{job.client.phone}</span>
+            </div>
+          )}
+          {job.client.email && (
+            <div className="flex items-center justify-between px-4 py-2.5">
+              <span className="text-xs text-muted-foreground">Email</span>
+              <span className="text-sm">{job.client.email}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5">
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="text-xs text-muted-foreground">Nakladka</span>
+              <span className="text-sm">{job.pickup.address || "\u2014"}</span>
+              <span className="text-xs text-muted-foreground/70">{job.pickup.floor}. patro{job.pickup.elevator ? " \u00b7 vytah" : " \u00b7 bez vytahu"}</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5">
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span className="text-xs text-muted-foreground">Vykladka</span>
+              <span className="text-sm">{job.delivery.address || "\u2014"}</span>
+              <span className="text-xs text-muted-foreground/70">{job.delivery.floor}. patro{job.delivery.elevator ? " \u00b7 vytah" : " \u00b7 bez vytahu"}</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-xs text-muted-foreground">Vzdalenost</span>
+            <span className="text-sm font-mono">{job.distance} km</span>
+          </div>
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-xs text-muted-foreground">Termin</span>
+            <span className="text-sm">{job.date ? new Date(job.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "long", year: "numeric" }) : "\u2014"}</span>
+          </div>
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-xs text-muted-foreground">Typ</span>
+            <span className="text-sm">{JOB_TYPE_LABELS[job.jobType]}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Technician notes — always visible, this is the primary action */}
+      <div className="rounded-2xl border border-border bg-card px-4 py-3">
+        <span className="text-sm font-medium block mb-2">Poznamky technika</span>
+        <textarea
+          value={job.technicianNotes || ""}
+          onChange={(e) => onChange((prev) => ({ ...prev, technicianNotes: e.target.value }))}
+          placeholder="Vlastni poznamky k zakazce..."
+          className="w-full min-h-[80px] rounded-lg border border-input bg-transparent px-2.5 py-2.5 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 resize-y"
+        />
+      </div>
+
+      {/* Access & risks — collapsed by default */}
+      <button
+        type="button"
+        onClick={() => setAccessExpanded((prev) => !prev)}
+        className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <span className="text-sm font-medium">Pristup a rizika</span>
+        {accessExpanded ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+      </button>
+
+      {accessExpanded && (
+        <AccessRisksCard access={job.access} onUpdate={updateAccess} />
+      )}
 
       <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
         <Button size="lg" className="h-14 w-full text-base" onClick={onNext}>

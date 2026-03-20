@@ -1,13 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import type { Job, MaterialOrder, VehicleId } from "@/lib/types"
 import { ROOM_LABELS, MATERIAL_LABELS, MATERIAL_UNITS } from "@/lib/types"
 import { VEHICLES } from "@/lib/constants"
 import { calculateJob, formatPrice, formatVolume } from "@/lib/calculator"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Truck } from "lucide-react"
+import { Truck, ChevronDown, ChevronUp } from "lucide-react"
 
 /** Auto-select vehicle based on total volume */
 function autoSelectVehicle(totalVolume: number): VehicleId {
@@ -28,148 +28,161 @@ interface StepCalculationProps {
 export function StepCalculation({ job, onChange, onNext, onBack }: StepCalculationProps) {
   const calc = calculateJob(job)
   const suggestedVehicle = autoSelectVehicle(calc.totalVolume)
+  const [vehicleExpanded, setVehicleExpanded] = useState(false)
+  const [priceExpanded, setPriceExpanded] = useState(false)
+
+  const selectedVehicle = VEHICLES.find((v) => v.id === job.vehicleId) ?? VEHICLES[2]
 
   function selectVehicle(vehicleId: VehicleId) {
     onChange((prev) => ({ ...prev, vehicleId }))
+    setVehicleExpanded(false)
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Vehicle selector */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Truck className="size-4" />
-            Typ vozu
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-2">
-            {VEHICLES.map((vehicle) => {
-              const isActive = job.vehicleId === vehicle.id
-              const isSuggested = suggestedVehicle === vehicle.id
-              return (
-                <button
-                  key={vehicle.id}
-                  type="button"
-                  onClick={() => selectVehicle(vehicle.id)}
-                  className={`flex items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-colors min-h-[44px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                    isActive
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:bg-accent"
-                  }`}
-                >
-                  <div className="flex flex-col">
-                    <span className={`text-sm font-medium ${isActive ? "text-primary" : ""}`}>
-                      {vehicle.name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{vehicle.description}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {formatPrice(vehicle.hourlyRate)}/hod
-                    </span>
-                    {isSuggested && (
-                      <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
-                        tip
-                      </span>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="flex flex-col gap-4">
+      {/* Vehicle selector — collapsed: shows selected, click to change */}
+      <button
+        type="button"
+        onClick={() => setVehicleExpanded((prev) => !prev)}
+        className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <div className="flex items-center gap-2">
+          <Truck className="size-4 text-muted-foreground" />
+          <span className="text-sm font-medium">{selectedVehicle.name}</span>
+          <span className="text-xs font-mono text-muted-foreground">{formatPrice(selectedVehicle.hourlyRate)}/hod</span>
+        </div>
+        {vehicleExpanded ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+      </button>
 
-      {/* Overview */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Objem" value={formatVolume(calc.totalVolume)} />
-        <StatCard label="Aut" value={`${calc.truckCount}×`} />
-        <StatCard label="Pracovníků" value={`${calc.workerCount}`} />
-        <StatCard label="Hodin" value={`${calc.estimatedHours}`} />
+      {vehicleExpanded && (
+        <div className="rounded-2xl border border-border bg-muted/30 overflow-hidden divide-y divide-border">
+          {VEHICLES.map((vehicle) => {
+            const isActive = job.vehicleId === vehicle.id
+            const isSuggested = suggestedVehicle === vehicle.id
+            return (
+              <button
+                key={vehicle.id}
+                type="button"
+                onClick={() => selectVehicle(vehicle.id)}
+                className={`flex items-center justify-between px-4 py-2.5 min-h-[44px] w-full text-left transition-colors hover:bg-accent active:bg-accent ${
+                  isActive ? "bg-primary/10" : ""
+                }`}
+              >
+                <div className="flex flex-col">
+                  <span className={`text-sm font-medium ${isActive ? "text-primary" : ""}`}>
+                    {vehicle.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {formatPrice(vehicle.hourlyRate)}/hod
+                  </span>
+                  {isSuggested && (
+                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
+                      tip
+                    </span>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Stats — single compact row */}
+      <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3">
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="font-mono text-base font-bold">{formatVolume(calc.totalVolume)}</span>
+          <span className="text-[10px] text-muted-foreground">Objem</span>
+        </div>
+        <Separator orientation="vertical" className="h-8" />
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="font-mono text-base font-bold">{calc.truckCount}x</span>
+          <span className="text-[10px] text-muted-foreground">Aut</span>
+        </div>
+        <Separator orientation="vertical" className="h-8" />
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="font-mono text-base font-bold">{calc.workerCount}</span>
+          <span className="text-[10px] text-muted-foreground">Lidi</span>
+        </div>
+        <Separator orientation="vertical" className="h-8" />
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="font-mono text-base font-bold">{calc.estimatedHours}h</span>
+          <span className="text-[10px] text-muted-foreground">Hodin</span>
+        </div>
       </div>
 
-      {/* Price breakdown */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Rozpis ceny</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <PriceLine label="Doprava (auta)" value={calc.breakdown.trucks} />
-          <PriceLine label="Práce" value={calc.breakdown.labor} />
-          <PriceLine label="Materiál + služby" value={calc.breakdown.materials} />
+      {/* Price — collapsed: total only, expanded: full breakdown */}
+      <button
+        type="button"
+        onClick={() => setPriceExpanded((prev) => !prev)}
+        className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <span className="text-base font-semibold">Celkem</span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xl font-bold">{formatPrice(calc.totalPrice)}</span>
+          {priceExpanded ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+        </div>
+      </button>
+
+      {priceExpanded && (
+        <div className="rounded-2xl border border-border bg-muted/30 overflow-hidden divide-y divide-border">
+          <PriceRow label="Doprava (auta)" value={calc.breakdown.trucks} />
+          <PriceRow label="Prace" value={calc.breakdown.labor} />
+          <PriceRow label="Material + sluzby" value={calc.breakdown.materials} />
           {calc.breakdown.floorSurcharge > 0 && (
-            <PriceLine label="Příplatek za patra" value={calc.breakdown.floorSurcharge} />
+            <PriceRow label="Priplatek za patra" value={calc.breakdown.floorSurcharge} />
           )}
           {calc.breakdown.distanceSurcharge > 0 && (
-            <PriceLine label="Příplatek za vzdálenost" value={calc.breakdown.distanceSurcharge} />
+            <PriceRow label="Priplatek za vzdalenost" value={calc.breakdown.distanceSurcharge} />
           )}
-          <Separator className="my-2" />
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-semibold">Celkem</span>
-            <span className="font-mono text-2xl font-bold">
-              {formatPrice(calc.totalPrice)}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Materials */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Materiál</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-1 text-sm">
+          {/* Materials used */}
           {(Object.entries(calc.materials) as [keyof MaterialOrder, number][])
             .filter(([, v]) => v > 0)
             .map(([key, value]) => (
-              <div key={key} className="flex justify-between">
+              <div key={key} className="flex items-center justify-between px-4 py-2 text-sm">
                 <span className="text-muted-foreground">{MATERIAL_LABELS[key]}</span>
-                <span className="font-mono">{value} {MATERIAL_UNITS[key]}</span>
+                <span className="font-mono text-muted-foreground">{value} {MATERIAL_UNITS[key]}</span>
               </div>
             ))}
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      {/* Items summary */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Soupis položek</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-1 text-sm">
+      {/* Items summary — compact inline */}
+      <div className="rounded-2xl border border-border bg-card px-4 py-3">
+        <p className="text-xs text-muted-foreground mb-2">Soupis</p>
+        <div className="flex flex-col gap-0.5 text-sm">
           {job.mode === "quick"
             ? (job.quickRooms ?? []).map((room) => (
                 <div key={room.id} className="flex justify-between">
-                  <span className="font-medium">{ROOM_LABELS[room.type]}</span>
+                  <span>{ROOM_LABELS[room.type]}</span>
                   <span className="font-mono text-muted-foreground">{room.percent}%</span>
                 </div>
               ))
             : (job.rooms ?? []).map((room) => (
-                <div key={room.id}>
-                  <span className="font-medium">
+                <div key={room.id} className="flex justify-between">
+                  <span>
                     {ROOM_LABELS[room.type]}
                     {room.customName ? ` (${room.customName})` : ""}
                   </span>
                   <span className="text-muted-foreground">
-                    {" — "}
                     {room.items.length === 0
-                      ? "zatím bez položek"
+                      ? "0 pol."
                       : `${room.items.reduce((sum, i) => sum + i.quantity, 0)} pol.`}
                   </span>
                 </div>
               ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Navigation */}
       <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 -mx-4 px-4 border-t border-border mt-auto">
         <div className="flex gap-3">
           <Button variant="outline" size="lg" className="h-14 flex-1" onClick={onBack}>
-            ← Zpět
+            &larr; Zpet
           </Button>
           <Button size="lg" className="h-14 flex-1 text-base" onClick={onNext}>
-            Vygenerovat nabídku →
+            Vygenerovat nabidku &rarr;
           </Button>
         </div>
       </div>
@@ -177,20 +190,9 @@ export function StepCalculation({ job, onChange, onNext, onBack }: StepCalculati
   )
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function PriceRow({ label, value }: { label: string; value: number }) {
   return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-1 py-4">
-        <span className="font-mono text-2xl font-bold">{value}</span>
-        <span className="text-xs text-muted-foreground">{label}</span>
-      </CardContent>
-    </Card>
-  )
-}
-
-function PriceLine({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
+    <div className="flex items-center justify-between px-4 py-2 text-sm">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-mono">{formatPrice(value)}</span>
     </div>

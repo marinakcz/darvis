@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useState, useCallback } from "react"
 import Image from "next/image"
 import type { Job, SurveyMode } from "@/lib/types"
-import { Zap, FileText, MapPin, Clock, LogOut, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Navigation2, Phone } from "lucide-react"
+import { Zap, FileText, MapPin, Clock, LogOut, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Navigation2, Phone, X } from "lucide-react"
 import { NavigationSheet, useNavigationSheet } from "@/components/navigation-sheet"
 import { createEmptyJob } from "@/lib/types"
 import { WizardNav } from "@/components/survey/wizard-nav"
@@ -558,6 +558,14 @@ export default function SurveyContent() {
           <div className="mx-auto flex max-w-2xl flex-col gap-2 px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => goTo(-1)}
+                  aria-label="Zavrit pruvodce"
+                  className="flex items-center justify-center size-11 -ml-2 rounded-lg text-muted-foreground hover:bg-accent active:bg-accent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <X className="size-5" />
+                </button>
                 <h1 className="text-lg font-semibold tracking-tight">Darvis</h1>
                 <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono px-1.5 py-0.5 rounded bg-muted">
                   {isQuick ? <><Zap className="size-3" /> rychlý</> : <><FileText className="size-3" /> detailní</>}

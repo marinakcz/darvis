@@ -16,9 +16,11 @@ interface RoomPanelProps {
   room: Room
   onUpdate: (updater: (room: Room) => Room) => void
   onRemove: () => void
+  /** Hide the card header — used when parent renders the header (accordion mode) */
+  hideHeader?: boolean
 }
 
-export function RoomPanel({ room, onUpdate, onRemove }: RoomPanelProps) {
+export function RoomPanel({ room, onUpdate, onRemove, hideHeader }: RoomPanelProps) {
   const [showItemPicker, setShowItemPicker] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const Icon = RoomIcon[room.type]
@@ -93,6 +95,45 @@ export function RoomPanel({ room, onUpdate, onRemove }: RoomPanelProps) {
       ...r,
       items: r.items.filter((i) => i.id !== itemId),
     }))
+  }
+
+  if (hideHeader) {
+    return (
+      <div className="flex flex-col gap-2 px-4 py-3">
+        {toast && (
+          <div className="flex items-center gap-2 rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary">
+            <Info className="size-3.5 shrink-0" />
+            <span>{toast}</span>
+          </div>
+        )}
+        {room.items.map((item) => (
+          <ItemRow
+            key={item.id}
+            item={item}
+            onUpdate={(updater) => updateItem(item.id, updater)}
+            onRemove={() => removeItem(item.id)}
+          />
+        ))}
+        {showItemPicker ? (
+          <ItemPicker
+            onSelect={addItem}
+            onClose={() => setShowItemPicker(false)}
+          />
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 border-dashed"
+            onClick={() => setShowItemPicker(true)}
+          >
+            + Pridat polozku
+          </Button>
+        )}
+        <Button variant="ghost" size="sm" className="h-10 text-destructive hover:text-destructive" onClick={onRemove}>
+          Odebrat mistnost
+        </Button>
+      </div>
+    )
   }
 
   return (
