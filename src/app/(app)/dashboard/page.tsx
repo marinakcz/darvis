@@ -120,13 +120,13 @@ export default function DashboardPage() {
               key={day.date}
               type="button"
               onClick={() => setSelectedDate(day.date)}
-              className={`flex flex-col items-center gap-0.5 flex-1 py-2 transition-colors ${
-                isSelected ? "text-text-primary" : "text-text-tertiary"
+              className={`flex flex-col items-center gap-0.5 flex-1 py-2 rounded-xl transition-colors ${
+                isSelected ? "text-text-primary bg-surface-1" : "text-text-tertiary"
               }`}
             >
               <span className="text-[10px] tracking-wide">{day.dayName}</span>
-              <span className={`text-lg font-bold ${isSelected ? "" : "font-medium"}`}>{day.dayNum}</span>
-              {isSelected && <span className="w-5 h-0.5 rounded-full bg-text-primary mt-0.5" />}
+              <span className={`text-lg ${isSelected ? "font-bold" : "font-medium"}`}>{day.dayNum}</span>
+              {isSelected && <span className="w-5 h-0.5 rounded-full bg-success mt-0.5" />}
               {!isSelected && (
                 <div className="flex items-center gap-0.5 h-1.5 mt-0.5">
                   {dots.map((dotColor, i) => (
@@ -161,7 +161,7 @@ export default function DashboardPage() {
                     onClick={() => n.jobId ? router.push(`/jobs/${n.jobId}`) : router.push("/notifications")}
                     className="flex items-start gap-3 rounded-xl bg-surface-2 px-3 py-3 text-left transition-colors hover:bg-surface-3 active:bg-surface-3"
                   >
-                    <div className={`flex items-center justify-center size-8 rounded-full ${nColor} bg-current/10 shrink-0 mt-0.5`}>
+                    <div className={`flex items-center justify-center size-8 rounded-full ${nColor} bg-surface-2 shrink-0 mt-0.5`}>
                       <NIcon className={`size-4 ${nColor}`} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -210,8 +210,8 @@ export default function DashboardPage() {
                     <div className="flex-1 min-w-0 py-4 pr-3">
                       <div className="flex items-center gap-2">
                         <span className="text-[15px] font-semibold truncate">{job.client}</span>
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${config.color} bg-current/10`}>
-                          <span className={config.color}>{config.label}</span>
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${config.color}`}>
+                          {config.label}
                         </span>
                       </div>
                       <span className="text-xs text-text-secondary truncate block mt-0.5">{job.pickup.split(",")[0]}</span>
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                     onClick={() => openJob(job)}
                     className={`flex items-center gap-3 rounded-2xl bg-surface-1 px-4 py-3.5 w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[3px] ${config.borderColor}`}
                   >
-                    <div className={`flex items-center justify-center size-9 rounded-full ${config.color} bg-current/10 shrink-0`}>
+                    <div className={`flex items-center justify-center size-9 rounded-full ${config.color} bg-surface-2 shrink-0`}>
                       <AttnIcon className={`size-4 ${config.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">

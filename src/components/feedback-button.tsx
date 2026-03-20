@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -11,18 +12,12 @@ import {
 import { FeedbackIcon } from "@/components/icons"
 import { MessageCircle, X, ArrowLeft, Check } from "lucide-react"
 
+/** Routes where the feedback FAB should NOT appear */
+const HIDDEN_PREFIXES = ["/admin", "/dashboard", "/jobs", "/notifications", "/profile", "/offer"]
+
 export function FeedbackButton() {
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
-
-  // Register global listener for opening the modal
-  if (typeof window !== "undefined") {
-    ;(window as unknown as { __darvisFb?: () => void }).__darvisFb?.()
-    const handler = () => setOpen(true)
-    window.addEventListener("darvis:open-feedback", handler)
-    ;(window as unknown as { __darvisFb?: () => void }).__darvisFb = () =>
-      window.removeEventListener("darvis:open-feedback", handler)
-  }
-
   const [step, setStep] = useState<"type" | "form" | "done">("type")
   const [type, setType] = useState<FeedbackType | null>(null)
   const [message, setMessage] = useState("")
@@ -46,14 +41,14 @@ export function FeedbackButton() {
       type,
       message,
       author: author || undefined,
-      page: typeof window !== "undefined" ? window.location.pathname + window.location.search : "",
+      page: pathname,
     })
     setStep("done")
     setTimeout(reset, 2500)
   }
 
-  // Hide on admin routes
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
+  // Hide on app routes, admin, and public offer
+  if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) {
     return null
   }
 

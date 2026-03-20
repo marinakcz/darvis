@@ -67,7 +67,7 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col gap-4 px-4 py-4">
+      <main className="flex flex-1 flex-col gap-4 px-4 py-4 pb-24">
         {/* Client card */}
         <Surface className="px-4 py-4">
           <div className="flex items-center justify-between">
@@ -86,8 +86,7 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
         </Surface>
 
         {/* Route */}
-        <Surface>
-          <Group>
+        <Group>
             {/* Pickup */}
             <div className="flex items-center justify-between gap-2 px-4 py-3 min-h-[44px]">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
@@ -125,7 +124,6 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
             {/* Distance */}
             <Row label="Vzdálenost" value={`${job.distance} km`} mono />
           </Group>
-        </Surface>
 
         {/* Dispatcher note */}
         {job.dispatcherNote && (
@@ -172,16 +170,19 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
           </Surface>
         )}
 
-        {/* CTA */}
-        {job.actionable && (
-          <div className="pt-4">
+      </main>
+
+      {/* Sticky CTA */}
+      {job.actionable && (
+        <div className="sticky bottom-0 z-40 border-t border-border bg-surface-0/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+          <div className="px-4 py-3">
             <ActionButton onClick={() => router.push(`/jobs/${id}/survey`)}>
               <ClipboardCheck className="size-5" />
               Zahájit zaměření
             </ActionButton>
           </div>
-        )}
-      </main>
+        </div>
+      )}
 
       {navAddress && <NavigationSheet address={navAddress} onClose={closeNav} />}
     </div>

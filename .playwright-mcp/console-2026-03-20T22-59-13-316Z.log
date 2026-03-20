@@ -1,0 +1,76 @@
+[  275664ms] [ERROR] ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx:127:19
+Expected '</', got 'jsx text'
+  125 |             <Row label="Vzdálenost" value={`${job.distance} km`} mono />
+  126 |           </Group>
+> 127 |         </Surface>
+      |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 128 |
+      | ^
+> 129 |         {/* Dispatcher note */}
+      | ^^^^^^^^
+  130 |         {job.dispatcherNote && (
+  131 |           <Alert variant="warning" title="Poznámka dispečinku">
+  132 |             {job.dispatcherNote}
+
+Parsing ecmascript source code failed
+
+Generated code of loaders [next/dist/build/babel/loader] transform of file content of projects/darvis/src/app/(app)/jobs/[id]/page.tsx:
+./projects/darvis/src/app/(app)/jobs/[id]/page.tsx:127:19
+  125 |             <Row label="Vzdálenost" value={`${job.distance} km`} mono />
+  126 |           </Group>
+> 127 |         </Surface>
+      |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 128 |
+      | ^
+> 129 |         {/* Dispatcher note */}
+      | ^^^^^^^^
+  130 |         {job.dispatcherNote && (
+  131 |           <Alert variant="warning" title="Poznámka dispečinku">
+  132 |             {job.dispatcherNote}
+
+Import traces:
+  Client Component Browser:
+    ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx [Client Component Browser]
+    ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx [Client Component SSR]
+    ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:3272
+[  275760ms] [ERROR] ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx:127:19
+Expected '</', got 'jsx text'
+  125 |             <Row label="Vzdálenost" value={`${job.distance} km`} mono />
+  126 |           </Group>
+> 127 |         </Surface>
+      |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 128 |
+      | ^
+> 129 |         {/* Dispatcher note */}
+      | ^^^^^^^^
+  130 |         {job.dispatcherNote && (
+  131 |           <Alert variant="warning" title="Poznámka dispečinku">
+  132 |             {job.dispatcherNote}
+
+Parsing ecmascript source code failed
+
+Generated code of loaders [next/dist/build/babel/loader] transform of file content of projects/darvis/src/app/(app)/jobs/[id]/page.tsx:
+./projects/darvis/src/app/(app)/jobs/[id]/page.tsx:127:19
+  125 |             <Row label="Vzdálenost" value={`${job.distance} km`} mono />
+  126 |           </Group>
+> 127 |         </Surface>
+      |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 128 |
+      | ^
+> 129 |         {/* Dispatcher note */}
+      | ^^^^^^^^
+  130 |         {job.dispatcherNote && (
+  131 |           <Alert variant="warning" title="Poznámka dispečinku">
+  132 |             {job.dispatcherNote}
+
+Import traces:
+  Client Component Browser:
+    ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx [Client Component Browser]
+    ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx [Client Component SSR]
+    ./projects/darvis/src/app/(app)/jobs/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/03~t_next_dist_05ll0or._.js:3272

@@ -69,17 +69,14 @@ function NotificationRow({ notification, onClick }: { notification: MockNotifica
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-start gap-3 px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2 ${
-        !notification.read ? "bg-surface-2/50" : ""
+      className={`flex items-start gap-3 px-4 py-3.5 min-h-[44px] w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2 ${
+        !notification.read ? "border-l-[3px] border-l-success bg-surface-2/40" : ""
       }`}
     >
       <div className="pt-0.5 shrink-0"><Icon className={`size-5 ${color}`} /></div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <span className={`text-sm ${notification.read ? "" : "font-semibold"} line-clamp-1`}>{notification.title}</span>
-          {!notification.read && <span className="size-2 rounded-full bg-red-500 shrink-0 mt-1.5" />}
-        </div>
-        <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{notification.body}</p>
+        <span className={`text-sm ${notification.read ? "text-text-secondary" : "font-semibold"} line-clamp-1 block`}>{notification.title}</span>
+        <p className="text-xs text-text-tertiary mt-0.5 line-clamp-2">{notification.body}</p>
         <span className="text-[10px] text-text-tertiary mt-1 block">{notification.time}</span>
       </div>
       {notification.jobId && <ChevronRight className="size-4 text-text-tertiary shrink-0 mt-1" />}

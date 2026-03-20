@@ -311,7 +311,7 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
               <span className="text-border">·</span>
               <span className="font-mono">{calc.workerCount} lidi</span>
             </div>
-            <span className="font-mono text-xl font-bold">{formatPrice(calc.totalPrice)}</span>
+            <span className="font-mono text-xl font-bold">{job.surveyRooms.length > 0 ? formatPrice(calc.totalPrice) : "—"}</span>
           </div>
           <ActionButton onClick={() => router.push(`/jobs/${jobId}/offer`)} disabled={job.surveyRooms.length === 0}>
             Zobrazit nabídku

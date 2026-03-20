@@ -147,8 +147,8 @@ function JobRow({ job, onClick }: { job: MockJob; onClick: () => void }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold truncate">{job.client}</span>
-          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${config.color} bg-current/10`} style={{ backgroundColor: undefined }}>
-            <span className={config.color}>{config.label}</span>
+          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${config.color}`}>
+            {config.label}
           </span>
         </div>
         <div className="flex items-center gap-2 mt-1">
