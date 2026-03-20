@@ -1,4 +1,4 @@
-import { put, list } from "@vercel/blob"
+import { put, list, del } from "@vercel/blob"
 import { isAdmin } from "@/lib/admin-auth"
 import type { NextRequest } from "next/server"
 import type { FeedbackEntry } from "@/lib/feedback"
@@ -112,6 +112,24 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error("Feedback PATCH error:", error)
     return Response.json({ error: "Failed to update" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    if (!isAdmin(request)) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { id } = await request.json()
+    if (!id) return Response.json({ error: "Missing id" }, { status: 400 })
+
+    await del(`feedback/${id}.json`)
+
+    return Response.json({ ok: true })
+  } catch (error) {
+    console.error("Feedback DELETE error:", error)
+    return Response.json({ error: "Failed to delete" }, { status: 500 })
   }
 }
 

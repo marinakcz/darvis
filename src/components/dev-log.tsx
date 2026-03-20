@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Check, Circle } from "lucide-react"
+import { Check, Circle, CheckCircle2 } from "lucide-react"
 
 interface LogItem {
   text: string
@@ -12,7 +12,7 @@ interface LogItem {
 interface LogEntry {
   version: string
   date: string
-  status: "done" | "in-progress" | "planned"
+  status: "done" | "in-progress" | "ready"
   title: string
   summary: string
   items: LogItem[]
@@ -38,7 +38,7 @@ const LOG_ENTRIES: LogEntry[] = [
   {
     version: "0.2.0",
     date: "další sprint",
-    status: "planned",
+    status: "ready",
     title: "Auth & zakázky",
     summary: "Přihlášení, seznam zakázek, databáze.",
     items: [
@@ -50,7 +50,7 @@ const LOG_ENTRIES: LogEntry[] = [
   {
     version: "0.3.0",
     date: "později",
-    status: "planned",
+    status: "ready",
     title: "PDF & sdílení",
     summary: "PDF nabídky, sdílení odkazem, podpis.",
     items: [
@@ -78,13 +78,13 @@ const STATUS_CONFIG = {
     bg: "bg-amber-500/5",
     check: "text-amber-500",
   },
-  planned: {
-    dot: "bg-zinc-600",
-    label: "Plán",
-    labelClass: "text-zinc-500",
-    border: "border-zinc-800 hover:border-zinc-700",
-    bg: "bg-zinc-800/30",
-    check: "text-zinc-600",
+  ready: {
+    dot: "bg-zinc-500",
+    label: "Připraveno",
+    labelClass: "text-zinc-400",
+    border: "border-zinc-700/50 hover:border-zinc-600",
+    bg: "bg-zinc-800/20",
+    check: "text-zinc-500",
   },
 }
 
@@ -158,6 +158,12 @@ function LogSection({ entry, defaultOpen }: { entry: LogEntry; defaultOpen: bool
           {entry.items.map((item, i) => (
             <ItemDetail key={i} item={item} status={entry.status} />
           ))}
+          {entry.status === "done" && (
+            <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-zinc-800/30 pl-1">
+              <CheckCircle2 className="size-3 text-emerald-500" />
+              <span className="text-[11px] text-emerald-500/70 font-medium">Potvrzeno</span>
+            </div>
+          )}
         </div>
       )}
     </div>

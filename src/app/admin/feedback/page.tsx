@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   Target, Wrench, HelpCircle, Plus, ThumbsUp,
   Download, ArrowLeft, Check, Eye, Clock,
-  Filter, Lock, LogOut, MapPin, Loader2,
+  Filter, Lock, LogOut, MapPin, Loader2, Trash2,
 } from "lucide-react"
 import type { ComponentType } from "react"
 import type { LucideProps } from "lucide-react"
@@ -190,6 +190,16 @@ export default function AdminFeedbackPage() {
     setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } as FeedbackEntry : e)))
   }
 
+  async function deleteEntry(id: string) {
+    await fetch("/api/feedback", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    })
+    setEntries((prev) => prev.filter((e) => e.id !== id))
+    setExpandedId(null)
+  }
+
   function exportJSON() {
     const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" })
     const url = URL.createObjectURL(blob)
@@ -330,7 +340,21 @@ export default function AdminFeedbackPage() {
                       {date.toLocaleDateString("cs-CZ")} {date.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed">{entry.message}</p>
+                  {(() => {
+                    const words = entry.message.split(/\s+/)
+                    const titleWords = words.slice(0, 10).join(" ")
+                    const bodyWords = words.length > 10 ? words.slice(10).join(" ") : null
+                    return (
+                      <div className="mt-2">
+                        <p className="text-sm font-semibold text-zinc-200 leading-relaxed">
+                          {titleWords}{words.length > 10 ? "..." : ""}
+                        </p>
+                        {bodyWords && (
+                          <p className="text-sm text-zinc-400 leading-relaxed mt-0.5">{bodyWords}</p>
+                        )}
+                      </div>
+                    )
+                  })()}
 
                   {/* Pin position info */}
                   {isPin && entry.x !== null && entry.y !== null && (
@@ -389,6 +413,17 @@ export default function AdminFeedbackPage() {
                           rows={2}
                           className="w-full resize-none rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-zinc-700 focus:outline-none"
                         />
+                      </div>
+                      <div className="pt-2 border-t border-zinc-800">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 border-red-500/20"
+                          onClick={() => deleteEntry(entry.id)}
+                        >
+                          <Trash2 className="size-3.5" />
+                          Smazat
+                        </Button>
                       </div>
                     </div>
                   )}

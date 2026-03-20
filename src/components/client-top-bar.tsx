@@ -18,7 +18,8 @@ import {
 import { DevLog } from "@/components/dev-log"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { ListChecks, Lock, ShieldCheck } from "lucide-react"
+import { ListChecks, Lock, ShieldCheck, FileText, Sparkles, Bug, RefreshCw } from "lucide-react"
+import { RELEASE_NOTES, type ReleaseNote } from "@/lib/release-notes"
 
 function AdminPinModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [pin, setPin] = useState("")
@@ -62,6 +63,33 @@ function AdminPinModal({ open, onClose }: { open: boolean; onClose: () => void }
           Vstoupit
         </Button>
       </div>
+    </div>
+  )
+}
+
+const NOTE_TYPE_CONFIG: Record<ReleaseNote["type"], { Icon: typeof Sparkles; color: string; label: string }> = {
+  feature: { Icon: Sparkles, color: "text-blue-400", label: "Feature" },
+  fix: { Icon: Bug, color: "text-red-400", label: "Fix" },
+  change: { Icon: RefreshCw, color: "text-amber-400", label: "Change" },
+}
+
+function ReleaseNoteCard({ note }: { note: ReleaseNote }) {
+  const typeConf = NOTE_TYPE_CONFIG[note.type]
+  const TypeIcon = typeConf.Icon
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-xs font-mono text-zinc-500">v{note.version}</span>
+        <span className="text-zinc-700">·</span>
+        <span className="text-xs text-zinc-500">{note.date}</span>
+        <span className="text-zinc-700">·</span>
+        <span className={`flex items-center gap-1 text-xs ${typeConf.color}`}>
+          <TypeIcon className="size-3" />
+          {typeConf.label}
+        </span>
+      </div>
+      <h3 className="text-sm font-semibold text-zinc-200 mb-1">{note.title}</h3>
+      <p className="text-xs text-zinc-400 leading-relaxed">{note.description}</p>
     </div>
   )
 }
@@ -115,6 +143,28 @@ export function ClientTopBar() {
               </SheetHeader>
               <div className="px-4 pb-6">
                 <DevLog embedded />
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <span className="h-4 w-px bg-zinc-700" />
+
+          {/* Notes */}
+          <Sheet>
+            <SheetTrigger className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer">
+              <FileText className="size-4" />
+              Notes
+            </SheetTrigger>
+            <SheetContent side="top" className="max-h-[75vh] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Release notes</SheetTitle>
+              </SheetHeader>
+              <div className="px-4 pb-6">
+                <div className="flex flex-col gap-3 max-w-2xl mx-auto">
+                  {RELEASE_NOTES.map((note) => (
+                    <ReleaseNoteCard key={note.id} note={note} />
+                  ))}
+                </div>
               </div>
             </SheetContent>
           </Sheet>

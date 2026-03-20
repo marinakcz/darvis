@@ -90,6 +90,7 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
   const [allPins, setAllPins] = useState<AnyPin[]>([])
   const [pinsLoaded, setPinsLoaded] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
+  const mobileContentRef = useRef<HTMLDivElement>(null)
 
   // Load all pins once
   if (!pinsLoaded) {
@@ -109,7 +110,7 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
 
   const pins = allPins.filter((p) => p.page === currentPage)
 
-  function handleAddPin(pin: { x: number; y: number; scrollY: number; contentHeight: number; message: string; page: string }) {
+  function handleAddPin(pin: { x: number; y: number; scrollY: number; contentHeight: number; message: string; page: string; author?: string }) {
     // Optimistic: add temp pin
     const tempId = `temp-${Date.now()}`
     const tempPin: AnyPin = {
@@ -122,7 +123,33 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
       y: pin.y,
       scrollY: pin.scrollY,
       contentHeight: pin.contentHeight,
-      author: null,
+      author: pin.author || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      resolvedAt: null,
+    }
+    setAllPins((prev) => [...prev, tempPin])
+
+    submitPin(pin).then((saved) => {
+      if (saved) {
+        setAllPins((prev) => prev.map((p) => (p.id === tempId ? saved : p)))
+      }
+    })
+  }
+
+  function handleAddPinMobile(pin: { x: number; y: number; scrollY: number; contentHeight: number; message: string; page: string; author?: string }) {
+    const tempId = `temp-${Date.now()}`
+    const tempPin: AnyPin = {
+      id: tempId,
+      kind: "pin",
+      message: pin.message,
+      type: null,
+      page: pin.page,
+      x: pin.x,
+      y: pin.y,
+      scrollY: pin.scrollY,
+      contentHeight: pin.contentHeight,
+      author: pin.author || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       resolvedAt: null,
@@ -143,9 +170,37 @@ export function PhoneFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* Mobile: render directly (pin overlay only on desktop for now) */}
+      {/* Mobile: render directly with pin overlay */}
       <div className="flex flex-1 flex-col lg:hidden">
-        {children}
+        <div ref={mobileContentRef} className="flex flex-1 flex-col overflow-y-auto relative">
+          <PinOverlay
+            active={pinMode}
+            pins={pins}
+            onAddPin={handleAddPinMobile}
+            containerRef={mobileContentRef}
+            onDeactivate={handleDeactivate}
+          />
+          {children}
+        </div>
+        {/* Mobile comment toggle button */}
+        <button
+          type="button"
+          onClick={() => {
+            if (pinMode) {
+              handleDeactivate()
+            } else {
+              setPinModeGlobal(true)
+            }
+          }}
+          className={`fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-medium shadow-lg transition-colors lg:hidden ${
+            pinMode
+              ? "border border-blue-500/50 bg-blue-500/10 text-blue-400 backdrop-blur"
+              : "border border-zinc-700 bg-zinc-900 text-zinc-400 backdrop-blur hover:bg-zinc-800"
+          }`}
+        >
+          {pinMode ? <MessageSquareOff className="size-4" /> : <MessageSquarePlus className="size-4" />}
+          {pinMode ? "Ukončit" : "Komentář"}
+        </button>
       </div>
 
       {/* Desktop: top bar + centered phone */}
