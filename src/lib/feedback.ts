@@ -52,31 +52,3 @@ export function submitFeedback(entry: {
   })
 }
 
-/** Submit pin comment (fire-and-forget, returns promise for optimistic update) */
-export function submitPin(pin: {
-  message: string
-  page: string
-  x: number
-  y: number
-  scrollY: number
-  contentHeight: number
-  author?: string
-}): Promise<FeedbackEntry | null> {
-  return fetch("/api/feedback", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      kind: "pin",
-      message: pin.message,
-      page: pin.page,
-      x: pin.x,
-      y: pin.y,
-      scrollY: pin.scrollY,
-      contentHeight: pin.contentHeight,
-      author: pin.author || null,
-    }),
-  })
-    .then((r) => r.json())
-    .then((data) => (data.entry as FeedbackEntry) ?? null)
-    .catch(() => null)
-}

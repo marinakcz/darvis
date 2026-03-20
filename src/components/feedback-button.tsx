@@ -9,7 +9,7 @@ import {
   submitFeedback,
 } from "@/lib/feedback"
 import { FeedbackIcon } from "@/components/icons"
-import { MessageCircle, X, ArrowLeft, Check, MapPin } from "lucide-react"
+import { MessageCircle, X, ArrowLeft, Check } from "lucide-react"
 
 export function FeedbackButton() {
   const [open, setOpen] = useState(false)
@@ -38,12 +38,6 @@ export function FeedbackButton() {
   function handleSelectType(t: FeedbackType) {
     setType(t)
     setStep("form")
-  }
-
-  function handlePinMode() {
-    // Close modal, activate pin mode via global event
-    reset()
-    window.dispatchEvent(new Event("darvis:pin-mode-on"))
   }
 
   function handleSubmit() {
@@ -109,16 +103,6 @@ export function FeedbackButton() {
                     },
                   )}
 
-                  {/* 6th option: Pin mode */}
-                  <button
-                    type="button"
-                    onClick={handlePinMode}
-                    className="flex flex-col items-start gap-1 rounded-xl border border-blue-500/30 bg-blue-500/5 p-3 text-left transition-colors hover:bg-blue-500/10 hover:border-blue-500/50 col-span-2"
-                  >
-                    <MapPin className="size-5 text-blue-400" />
-                    <span className="text-sm font-medium text-blue-300">Komentovat v aplikaci</span>
-                    <span className="text-[11px] text-zinc-500 leading-tight">Klikněte kamkoliv v aplikaci a přidejte komentář</span>
-                  </button>
                 </div>
               </div>
             )}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   Target, Wrench, HelpCircle, Plus, ThumbsUp,
   Download, ArrowLeft, Check, Eye, Clock,
-  Filter, Lock, LogOut, MapPin, Loader2, Trash2,
+  Filter, Lock, LogOut, Loader2, Trash2,
   MessageSquare,
 } from "lucide-react"
 import type { ComponentType } from "react"
@@ -28,7 +28,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; Icon: Compon
   done: { label: "Hotovo", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", Icon: Check },
 }
 
-type KindTab = "all" | "general" | "pin"
+type KindTab = "all" | "general"
 
 export default function AdminFeedbackPage() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -162,7 +162,6 @@ export default function AdminFeedbackPage() {
 
   const filtered = entries.filter((e) => {
     if (kindTab === "general" && e.kind !== "general") return false
-    if (kindTab === "pin" && e.kind !== "pin") return false
     if (filterType && e.type !== filterType) return false
     if (filterStatus && e.status !== filterStatus) return false
     return true
@@ -171,7 +170,6 @@ export default function AdminFeedbackPage() {
   const counts = {
     total: entries.length,
     general: entries.filter((e) => e.kind === "general").length,
-    pin: entries.filter((e) => e.kind === "pin").length,
     new: entries.filter((e) => e.status === "new").length,
     read: entries.filter((e) => e.status === "read").length,
     "in-progress": entries.filter((e) => e.status === "in-progress").length,
@@ -211,10 +209,6 @@ export default function AdminFeedbackPage() {
     URL.revokeObjectURL(url)
   }
 
-  function contextLink(entry: FeedbackEntry): string | null {
-    if (entry.kind !== "pin" || !entry.page) return null
-    return entry.page
-  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200">
@@ -255,26 +249,6 @@ export default function AdminFeedbackPage() {
           </a>
         </div>
 
-        {/* Kind tabs */}
-        <div className="flex gap-1 pb-4 border-b border-zinc-800 mb-4">
-          {([
-            { key: "all" as KindTab, label: "Vše", count: counts.total },
-            { key: "general" as KindTab, label: "Obecná", count: counts.general },
-            { key: "pin" as KindTab, label: "Piny", count: counts.pin },
-          ]).map(({ key, label, count }) => (
-            <button
-              key={key}
-              onClick={() => setKindTab(key)}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                kindTab === key ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
-              }`}
-            >
-              {key === "pin" && <MapPin className="size-3.5" />}
-              {label}
-              <span className="font-mono text-xs text-zinc-600">{count}</span>
-            </button>
-          ))}
-        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-2 pb-4">
@@ -285,7 +259,7 @@ export default function AdminFeedbackPage() {
         </div>
 
         {/* Type filters (only for general tab or all) */}
-        {kindTab !== "pin" && (
+        {(
           <div className="flex items-center gap-1.5 pb-4 flex-wrap">
             <Filter className="size-3.5 text-zinc-600 mr-1" />
             {Object.entries(TYPE_CONFIG).map(([key, { label, Icon }]) => (
@@ -316,12 +290,10 @@ export default function AdminFeedbackPage() {
         {!loading && (
           <div className="flex flex-col gap-2">
             {filtered.map((entry) => {
-              const isPin = entry.kind === "pin"
               const typeConf = entry.type ? (TYPE_CONFIG[entry.type] ?? { label: entry.type, color: "bg-zinc-800 text-zinc-400", Icon: HelpCircle }) : null
               const statusConf = STATUS_CONFIG[entry.status] ?? STATUS_CONFIG.new
               const date = new Date(entry.createdAt)
               const isExpanded = expandedId === entry.id
-              const link = contextLink(entry)
 
               return (
                 <div
@@ -336,12 +308,6 @@ export default function AdminFeedbackPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2 flex-wrap">
-                      {isPin && (
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
-                          <MapPin className="size-3 mr-1" />
-                          Pin
-                        </Badge>
-                      )}
                       {typeConf && (() => {
                         const TypeIcon = typeConf.Icon
                         return (
@@ -374,26 +340,7 @@ export default function AdminFeedbackPage() {
                     )
                   })()}
 
-                  {/* Pin position info */}
-                  {isPin && entry.x !== null && entry.y !== null && (
-                    <p className="mt-1 text-xs text-zinc-600 font-mono">
-                      x: {entry.x.toFixed(1)}% y: {entry.y.toFixed(0)}px
-                    </p>
-                  )}
-
                   {entry.page && <p className="mt-1 text-xs text-zinc-600 font-mono">{entry.page}</p>}
-
-                  {/* Context link for pins */}
-                  {isPin && link && (
-                    <a
-                      href={link}
-                      className="mt-1 text-xs text-blue-400 hover:text-blue-300 inline-flex items-center gap-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Eye className="size-3" />
-                      Zobrazit v kontextu
-                    </a>
-                  )}
 
                   {isExpanded && (
                     <div className="mt-3 pt-3 border-t border-zinc-800 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
