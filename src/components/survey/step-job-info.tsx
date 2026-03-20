@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react"
 import { Home, Building2, Weight, Palette, Globe, Navigation2 } from "lucide-react"
+import { NavigationSheet } from "@/components/navigation-sheet"
 
 const JOB_TYPE_ICONS: Record<JobType, typeof Home> = {
   apartment: Home,
@@ -20,8 +22,8 @@ const JOB_TYPE_ICONS: Record<JobType, typeof Home> = {
 
 const JOB_TYPE_ORDER: JobType[] = ["apartment", "office", "heavy", "art", "international"]
 
-/** Otevri navigaci na adresu */
-function openNavigation(address: string) {
+/** @deprecated — use NavigationSheet instead */
+function _openNavigation(address: string) {
   const encoded = encodeURIComponent(address)
   const ua = navigator.userAgent || ""
   if (/iPhone|iPad|iPod/.test(ua)) {
@@ -90,7 +92,7 @@ export function StepJobInfo({ job, onChange, onNext, readonly }: StepJobInfoProp
               {job.pickup.address && (
                 <button
                   type="button"
-                  onClick={() => openNavigation(job.pickup.address)}
+                  onClick={() => _openNavigation(job.pickup.address)}
                   className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-primary shrink-0 min-h-[36px] hover:bg-accent active:bg-accent transition-colors"
                 >
                   <Navigation2 className="size-3.5" />
@@ -107,7 +109,7 @@ export function StepJobInfo({ job, onChange, onNext, readonly }: StepJobInfoProp
               {job.delivery.address && (
                 <button
                   type="button"
-                  onClick={() => openNavigation(job.delivery.address)}
+                  onClick={() => _openNavigation(job.delivery.address)}
                   className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-primary shrink-0 min-h-[36px] hover:bg-accent active:bg-accent transition-colors"
                 >
                   <Navigation2 className="size-3.5" />
@@ -407,7 +409,7 @@ function LocationCard({
             {location.address && (
               <button
                 type="button"
-                onClick={() => openNavigation(location.address)}
+                onClick={() => _openNavigation(location.address)}
                 className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-primary shrink-0 min-h-[44px] hover:bg-accent active:bg-accent transition-colors"
               >
                 <Navigation2 className="size-4" />

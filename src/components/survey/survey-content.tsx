@@ -4,7 +4,8 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useState, useCallback } from "react"
 import Image from "next/image"
 import type { Job, SurveyMode } from "@/lib/types"
-import { Zap, FileText, MapPin, Clock, LogOut, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Navigation2 } from "lucide-react"
+import { Zap, FileText, MapPin, Clock, LogOut, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Navigation2, Phone } from "lucide-react"
+import { NavigationSheet, useNavigationSheet } from "@/components/navigation-sheet"
 import { createEmptyJob } from "@/lib/types"
 import { WizardNav } from "@/components/survey/wizard-nav"
 import { StepJobInfo } from "@/components/survey/step-job-info"
@@ -201,19 +202,6 @@ function ProfileScreen({ onLogout }: { onLogout: () => void }) {
   )
 }
 
-/** Otevře navigaci na adresu — iOS Maps, Android geo:, fallback Mapy.cz */
-function openNavigation(address: string) {
-  const encoded = encodeURIComponent(address)
-  const ua = navigator.userAgent || ""
-  if (/iPhone|iPad|iPod/.test(ua)) {
-    window.location.href = `maps://maps.apple.com/?q=${encoded}`
-  } else if (/Android/.test(ua)) {
-    window.location.href = `geo:0,0?q=${encoded}`
-  } else {
-    window.open(`https://mapy.cz/zakladni?q=${encoded}`, "_blank")
-  }
-}
-
 /** Detail zakázky — Read vs Write layout */
 function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
   selectedJob: MockJob
@@ -222,18 +210,22 @@ function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
   onLoadJob: (mockJob: MockJob, mode: SurveyMode) => void
 }) {
   const [crmExpanded, setCrmExpanded] = useState(false)
+  const { navAddress, openNav, closeNav } = useNavigationSheet()
 
   const statusBg = selectedJob.statusColor === "text-blue-400" ? "bg-blue-400/15 text-blue-400" : selectedJob.statusColor === "text-green-400" ? "bg-green-400/15 text-green-400" : "bg-yellow-400/15 text-yellow-400"
 
   return (
     <div className="flex flex-1 flex-col ios-slide-in">
-      <header className="border-b bg-background/80 backdrop-blur-xl px-4 py-3">
+      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-xl px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <button type="button" onClick={onBack} aria-label="Zpet na seznam zakazek" className="flex items-center gap-0.5 text-primary text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">
+          <button type="button" onClick={onBack} aria-label="Zpět na seznam zakázek" className="flex items-center gap-0.5 text-primary text-sm shrink-0">
             <ChevronLeft className="size-5" />
-            <span>Zpet</span>
           </button>
-          <h1 className="text-lg font-semibold tracking-tight flex-1 text-center pr-12">Detail zakazky</h1>
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-sm font-semibold truncate">{selectedJob.client}</span>
+            <span className="text-[11px] text-muted-foreground truncate">{selectedJob.name.split(" — ")[1]}</span>
+          </div>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${statusBg}`}>{selectedJob.status}</span>
         </div>
       </header>
       <main className="flex flex-1 flex-col gap-4 px-4 py-4">
@@ -260,7 +252,13 @@ function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
             <div className="rounded-2xl border border-border bg-muted/30 overflow-hidden divide-y divide-border">
               <div className="flex items-center justify-between px-4 py-2.5 min-h-[40px]">
                 <span className="text-xs text-muted-foreground">Klient</span>
-                <span className="text-sm text-muted-foreground">{selectedJob.client} · {selectedJob.phone}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{selectedJob.client}</span>
+                  <a href={`tel:${selectedJob.phone}`} className="flex items-center gap-1 text-primary text-xs hover:underline">
+                    <Phone className="size-3" />
+                    {selectedJob.phone}
+                  </a>
+                </div>
               </div>
               <div className="flex items-center justify-between gap-2 px-4 py-2.5 min-h-[40px]">
                 <div className="flex flex-col gap-0.5 flex-1 min-w-0">
@@ -270,7 +268,7 @@ function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
                 </div>
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); openNavigation(selectedJob.pickup) }}
+                  onClick={(e) => { e.stopPropagation(); openNav(selectedJob.pickup) }}
                   className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-primary shrink-0 min-h-[36px] hover:bg-accent active:bg-accent transition-colors"
                 >
                   <Navigation2 className="size-3.5" />
@@ -285,7 +283,7 @@ function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
                 </div>
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); openNavigation(selectedJob.delivery) }}
+                  onClick={(e) => { e.stopPropagation(); openNav(selectedJob.delivery) }}
                   className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-primary shrink-0 min-h-[36px] hover:bg-accent active:bg-accent transition-colors"
                 >
                   <Navigation2 className="size-3.5" />
@@ -329,6 +327,9 @@ function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
           </div>
         )}
       </main>
+
+      {/* Navigation sheet */}
+      {navAddress && <NavigationSheet address={navAddress} onClose={closeNav} />}
     </div>
   )
 }
