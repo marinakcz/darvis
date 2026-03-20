@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import {
   Sheet,
@@ -16,59 +15,7 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip"
 import { DevLog } from "@/components/dev-log"
-import { ListChecks, ShieldCheck, FileText, Sparkles, Bug, RefreshCw } from "lucide-react"
-import type { ReleaseNote } from "@/lib/release-notes"
-
-const NOTE_TYPE_CONFIG: Record<string, { Icon: typeof Sparkles; color: string; label: string }> = {
-  feature: { Icon: Sparkles, color: "text-blue-400", label: "Feature" },
-  fix: { Icon: Bug, color: "text-red-400", label: "Fix" },
-  change: { Icon: RefreshCw, color: "text-amber-400", label: "Change" },
-}
-
-function ReleaseNoteCard({ note }: { note: ReleaseNote }) {
-  const typeConf = NOTE_TYPE_CONFIG[note.type] ?? NOTE_TYPE_CONFIG.feature
-  const TypeIcon = typeConf.Icon
-  return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="text-xs font-mono text-zinc-500">v{note.version}</span>
-        <span className="text-zinc-700">·</span>
-        <span className="text-xs text-zinc-500">{note.date}</span>
-        <span className="text-zinc-700">·</span>
-        <span className={`flex items-center gap-1 text-xs ${typeConf.color}`}>
-          <TypeIcon className="size-3" />
-          {typeConf.label}
-        </span>
-      </div>
-      <h3 className="text-sm font-semibold text-zinc-200 mb-1">{note.title}</h3>
-      <p className="text-xs text-zinc-400 leading-relaxed">{note.description}</p>
-    </div>
-  )
-}
-
-function NotesPanel() {
-  const [notes, setNotes] = useState<ReleaseNote[] | null>(null)
-  const [loaded, setLoaded] = useState(false)
-
-  if (!loaded) {
-    setLoaded(true)
-    fetch("/api/pipeline?type=notes")
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setNotes(data) })
-      .catch(() => {})
-  }
-
-  if (!notes) return <p className="text-sm text-zinc-500 p-4">Načítám...</p>
-  if (notes.length === 0) return <p className="text-sm text-zinc-500 p-4">Zatím žádné záznamy.</p>
-
-  return (
-    <div className="flex flex-col gap-3 p-4">
-      {notes.map((note) => (
-        <ReleaseNoteCard key={note.id} note={note} />
-      ))}
-    </div>
-  )
-}
+import { ListChecks, ShieldCheck } from "lucide-react"
 
 export function ClientTopBar() {
   function handleAdminClick() {
@@ -112,22 +59,6 @@ export function ClientTopBar() {
             <div className="p-4">
               <DevLog embedded />
             </div>
-          </SheetContent>
-        </Sheet>
-
-        <span className="h-4 w-px bg-zinc-700" />
-
-        {/* Notes — side panel right */}
-        <Sheet>
-          <SheetTrigger className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer">
-            <FileText className="size-4" />
-            Notes
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[400px] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Co je nového</SheetTitle>
-            </SheetHeader>
-            <NotesPanel />
           </SheetContent>
         </Sheet>
 
