@@ -26,6 +26,7 @@ async function putBlob(key: string, data: unknown) {
     contentType: "application/json",
     access: "private",
     addRandomSuffix: false,
+    allowOverwrite: true,
   })
 }
 

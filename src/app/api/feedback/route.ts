@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       contentType: "application/json",
       access: "private",
       addRandomSuffix: false,
+      allowOverwrite: true,
     })
 
     return Response.json({ ok: true, id, entry })
@@ -106,6 +107,7 @@ export async function PATCH(request: NextRequest) {
       contentType: "application/json",
       access: "private",
       addRandomSuffix: false,
+      allowOverwrite: true,
     })
 
     return Response.json({ ok: true })
