@@ -67,12 +67,9 @@ function AdminPinModal({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 export function ClientTopBar() {
-  const [showPin, setShowPin] = useState(false)
 
   function handleAdminClick() {
-    // Try fetching feedback — if cookie is valid, we'll get admin data
-    // For now just show PIN modal; the cookie handles auth on the admin page
-    setShowPin(true)
+    window.open("/admin/feedback", "_blank")
   }
 
   return (
@@ -91,7 +88,8 @@ export function ClientTopBar() {
             <span className="font-mono text-zinc-500">v0.1.0</span>
             <span className="text-zinc-700">·</span>
             <span className="text-zinc-500">
-            {new Date().toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric" })}
+            {new Date().toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric" })}{", "}
+            {new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}
           </span>
           </div>
         </div>
@@ -166,7 +164,6 @@ export function ClientTopBar() {
         </div>
       </div>
 
-      <AdminPinModal open={showPin} onClose={() => setShowPin(false)} />
     </>
   )
 }
