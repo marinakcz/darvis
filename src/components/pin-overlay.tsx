@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, type RefObject } from "react"
+import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { X, Check, MessageSquarePlus, Eye, EyeOff } from "lucide-react"
 import type { FeedbackEntry, PublicFeedbackEntry } from "@/lib/feedback"
@@ -74,6 +75,7 @@ export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate 
         return (
           <div
             key={pin.id}
+            data-pin-id={pin.id}
             className="absolute z-40"
             style={{ left: `${pin.x}%`, top: `${pin.y}px`, transform: "translate(-50%, -50%)" }}
             onMouseEnter={() => setHoveredId(pin.id)}
@@ -93,18 +95,31 @@ export function PinOverlay({ active, pins, onAddPin, containerRef, onDeactivate 
               {isDone ? <Check className="size-3" /> : index + 1}
             </div>
 
-            {/* Tooltip on hover/tap */}
-            {hoveredId === pin.id && (
-              <div className="absolute left-8 top-0 z-50 w-48 rounded-lg border border-zinc-700 bg-zinc-900 p-2.5 shadow-xl text-xs">
-                <p className="text-zinc-200 leading-relaxed">{pin.message}</p>
-                {pin.author && (
-                  <p className="text-zinc-500 mt-1">-- {pin.author}</p>
-                )}
-                <p className="text-zinc-600 mt-1 font-mono text-[10px]">
-                  {new Date(pin.createdAt).toLocaleDateString("cs-CZ")}
-                </p>
-              </div>
-            )}
+            {/* Tooltip — rendered via portal to avoid overflow clipping */}
+            {hoveredId === pin.id && typeof document !== "undefined" && (() => {
+              const pinEl = document.querySelector(`[data-pin-id="${pin.id}"]`)
+              const rect = pinEl?.getBoundingClientRect()
+              if (!rect) return null
+              return createPortal(
+                <div
+                  className="fixed w-52 rounded-lg border border-zinc-700 bg-zinc-900 p-3 shadow-2xl text-xs pointer-events-none"
+                  style={{
+                    left: Math.min(rect.right + 8, window.innerWidth - 220),
+                    top: rect.top,
+                    zIndex: 9999,
+                  }}
+                >
+                  <p className="text-zinc-200 leading-relaxed">{pin.message}</p>
+                  {pin.author && (
+                    <p className="text-zinc-500 mt-1.5">-- {pin.author}</p>
+                  )}
+                  <p className="text-zinc-600 mt-1 font-mono text-[10px]">
+                    {new Date(pin.createdAt).toLocaleDateString("cs-CZ")}
+                  </p>
+                </div>,
+                document.body
+              )
+            })()}
           </div>
         )
       })}
