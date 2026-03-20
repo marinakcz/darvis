@@ -9,30 +9,57 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
+    id: "rn-015",
+    version: "0.1.5",
+    date: "20. 3. 2026",
+    title: "iOS design a reálný ceník",
+    description:
+      "iOS design systém (44px touch targety, 8pt grid, safe areas). 5 vozů z reálného ceníku Stěhování Praha s hodinovými sazbami. 5 typů zakázek. Závislosti položek.",
+    type: "change",
+  },
+  {
+    id: "rn-014",
+    version: "0.1.4",
+    date: "20. 3. 2026",
+    title: "Mobilní navigace",
+    description:
+      "Tab bar (Zakázky, Kalendář, Nový, Profil). Kalendář s nadcházejícími zakázkami. Profil technika s nastavením. PWA — instalovatelná na homescreen.",
+    type: "feature",
+  },
+  {
+    id: "rn-013",
+    version: "0.1.3",
+    date: "20. 3. 2026",
+    title: "Komentáře a piny",
+    description:
+      "Pin komentáře přímo v prototypu (klávesa C). Kapkový marker, jméno autora. Zpětná vazba s 5 kategoriemi. Admin dashboard s filtry, stavy a exportem.",
+    type: "feature",
+  },
+  {
     id: "rn-012",
     version: "0.1.2",
     date: "20. 3. 2026",
-    title: "Ochrana p\u0159\u00edstupu",
+    title: "Ochrana přístupu",
     description:
-      "P\u0159\u00edstupov\u00fd k\u00f3d pro vstup do prototypu, admin PIN, serverov\u00e1 ochrana.",
+      "Přístupový kód pro vstup do prototypu. Admin PIN. Serverová ochrana přes proxy.",
     type: "feature",
   },
   {
     id: "rn-011",
     version: "0.1.1",
-    date: "19. 3. 2026",
-    title: "Zp\u011btn\u00e1 vazba a koment\u00e1\u0159e",
+    date: "20. 3. 2026",
+    title: "Klientské prostředí",
     description:
-      "Plovouc\u00ed tla\u010d\u00edtko zp\u011btn\u00e9 vazby, pin koment\u00e1\u0159e v prototypu, admin dashboard s filtry a stavy.",
+      "Vrchní lišta s Timeline, Notes a Admin. Phone frame preview. Dev log s fázemi projektu. Release notes.",
     type: "feature",
   },
   {
     id: "rn-010",
     version: "0.1.0",
-    date: "18. 3. 2026",
-    title: "MVP Kalkula\u010dn\u00ed wizard",
+    date: "20. 3. 2026",
+    title: "MVP Kalkulační wizard",
     description:
-      "Dva re\u017eimy zam\u011b\u0159en\u00ed (rychl\u00fd odhad + detailn\u00ed), katalog 40 polo\u017eek, kalkula\u010dn\u00ed engine, nab\u00eddka pro klienta.",
+      "Dva režimy zaměření (rychlý odhad + detailní). Katalog 40+ položek. Kalkulační engine. Nabídka pro klienta.",
     type: "feature",
   },
 ]
