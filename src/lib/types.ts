@@ -36,6 +36,13 @@ export const ROOM_LABELS: Record<RoomType, string> = {
 }
 
 
+export interface JobAccess {
+  parking: "easy" | "limited" | "difficult"
+  narrowPassage: boolean
+  narrowNote: string
+  entryDistance: "short" | "medium" | "long"
+}
+
 export interface Job {
   mode: SurveyMode
   jobType: JobType
@@ -50,6 +57,12 @@ export interface Job {
   quickRooms: QuickRoom[]
   /** Materiálový požadavek */
   materials: MaterialOrder
+  /** Zda zakázka pochází z CRM (readonly údaje) */
+  fromCRM?: boolean
+  /** Poznámky technika */
+  technicianNotes?: string
+  /** Přístup a rizika */
+  access: JobAccess
 }
 
 export interface Room {
@@ -153,6 +166,12 @@ export function createEmptyJob(mode: SurveyMode = "detailed"): Job {
       stretchWrap: 0,
       bubbleWrap: 0,
       packingPaper: 0,
+    },
+    access: {
+      parking: "easy",
+      narrowPassage: false,
+      narrowNote: "",
+      entryDistance: "short",
     },
   }
 }

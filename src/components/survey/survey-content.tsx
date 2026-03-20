@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useState, useCallback } from "react"
 import Image from "next/image"
 import type { Job, SurveyMode } from "@/lib/types"
-import { Zap, FileText, MapPin, Clock, LogOut, ChevronRight, ChevronLeft } from "lucide-react"
+import { Zap, FileText, MapPin, Clock, LogOut, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Navigation2 } from "lucide-react"
 import { createEmptyJob } from "@/lib/types"
 import { WizardNav } from "@/components/survey/wizard-nav"
 import { StepJobInfo } from "@/components/survey/step-job-info"
@@ -201,6 +201,138 @@ function ProfileScreen({ onLogout }: { onLogout: () => void }) {
   )
 }
 
+/** Otevře navigaci na adresu — iOS Maps, Android geo:, fallback Mapy.cz */
+function openNavigation(address: string) {
+  const encoded = encodeURIComponent(address)
+  const ua = navigator.userAgent || ""
+  if (/iPhone|iPad|iPod/.test(ua)) {
+    window.location.href = `maps://maps.apple.com/?q=${encoded}`
+  } else if (/Android/.test(ua)) {
+    window.location.href = `geo:0,0?q=${encoded}`
+  } else {
+    window.open(`https://mapy.cz/zakladni?q=${encoded}`, "_blank")
+  }
+}
+
+/** Detail zakázky — Read vs Write layout */
+function DetailView({ selectedJob, dateFormatted, onBack, onLoadJob }: {
+  selectedJob: MockJob
+  dateFormatted: string
+  onBack: () => void
+  onLoadJob: (mockJob: MockJob, mode: SurveyMode) => void
+}) {
+  const [crmExpanded, setCrmExpanded] = useState(false)
+
+  const statusBg = selectedJob.statusColor === "text-blue-400" ? "bg-blue-400/15 text-blue-400" : selectedJob.statusColor === "text-green-400" ? "bg-green-400/15 text-green-400" : "bg-yellow-400/15 text-yellow-400"
+
+  return (
+    <div className="flex flex-1 flex-col ios-slide-in">
+      <header className="border-b bg-background/80 backdrop-blur-xl px-4 py-3">
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={onBack} aria-label="Zpet na seznam zakazek" className="flex items-center gap-0.5 text-primary text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">
+            <ChevronLeft className="size-5" />
+            <span>Zpet</span>
+          </button>
+          <h1 className="text-lg font-semibold tracking-tight flex-1 text-center pr-12">Detail zakazky</h1>
+        </div>
+      </header>
+      <main className="flex flex-1 flex-col gap-4 px-4 py-4">
+        {/* Status badge + date */}
+        <div className="flex items-center justify-between">
+          <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold ${statusBg}`}>
+            {selectedJob.status}
+          </span>
+          <span className="text-sm text-muted-foreground">{dateFormatted}</span>
+        </div>
+
+        {/* Collapsible CRM data */}
+        <div className="flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={() => setCrmExpanded((prev) => !prev)}
+            className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <span className="text-sm font-medium text-muted-foreground">Udaje zakazky</span>
+            {crmExpanded ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+          </button>
+
+          {crmExpanded && (
+            <div className="rounded-2xl border border-border bg-muted/30 overflow-hidden divide-y divide-border">
+              <div className="flex items-center justify-between px-4 py-2.5 min-h-[40px]">
+                <span className="text-xs text-muted-foreground">Klient</span>
+                <span className="text-sm text-muted-foreground">{selectedJob.client} · {selectedJob.phone}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 px-4 py-2.5 min-h-[40px]">
+                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                  <span className="text-xs text-muted-foreground">Nakladka</span>
+                  <span className="text-sm text-muted-foreground truncate">{selectedJob.pickup}</span>
+                  <span className="text-xs text-muted-foreground/70">{selectedJob.floor.pickup}. patro{selectedJob.elevator.pickup ? " · vytah" : " · bez vytahu"}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); openNavigation(selectedJob.pickup) }}
+                  className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-primary shrink-0 min-h-[36px] hover:bg-accent active:bg-accent transition-colors"
+                >
+                  <Navigation2 className="size-3.5" />
+                  <span>Navigovat</span>
+                </button>
+              </div>
+              <div className="flex items-center justify-between gap-2 px-4 py-2.5 min-h-[40px]">
+                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                  <span className="text-xs text-muted-foreground">Vykladka</span>
+                  <span className="text-sm text-muted-foreground truncate">{selectedJob.delivery}</span>
+                  <span className="text-xs text-muted-foreground/70">{selectedJob.floor.delivery}. patro{selectedJob.elevator.delivery ? " · vytah" : " · bez vytahu"}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); openNavigation(selectedJob.delivery) }}
+                  className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs text-primary shrink-0 min-h-[36px] hover:bg-accent active:bg-accent transition-colors"
+                >
+                  <Navigation2 className="size-3.5" />
+                  <span>Navigovat</span>
+                </button>
+              </div>
+              <div className="flex items-center justify-between px-4 py-2.5 min-h-[40px]">
+                <span className="text-xs text-muted-foreground">Vzdalenost</span>
+                <span className="text-sm font-mono text-muted-foreground">{selectedJob.distance} km</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Dispatcher note mock */}
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+          <p className="text-xs font-medium text-amber-400 mb-1">Poznamka dispecinku</p>
+          <p className="text-sm text-muted-foreground">Klient preferuje dopoledni termin. Pozor na uzke schodiste ve 2. patre.</p>
+        </div>
+
+        {/* Price if exists */}
+        {selectedJob.price !== "\u2014" && (
+          <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
+              <span className="text-sm">Celkem</span>
+              <span className="text-sm font-mono font-medium">{selectedJob.price}</span>
+            </div>
+          </div>
+        )}
+
+        {/* CTA buttons — prominent */}
+        {selectedJob.actionable && (
+          <div className="flex flex-col gap-3 pt-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider px-1">Zahajit zamereni</p>
+            <Button size="lg" className="h-14 text-base gap-2 rounded-2xl" onClick={() => onLoadJob(selectedJob, "quick")}>
+              <Zap className="size-5" /> Rychle zamereni
+            </Button>
+            <Button variant="outline" size="lg" className="h-14 text-base gap-2 rounded-2xl" onClick={() => onLoadJob(selectedJob, "detailed")}>
+              <FileText className="size-5" /> Detailni zamereni
+            </Button>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
+
 /** Dashboard with mock jobs */
 function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (mode: SurveyMode) => void; onLoadJob: (mockJob: MockJob, mode: SurveyMode) => void; showModePicker?: boolean }) {
   const [view, setView] = useState<"list" | "mode-picker" | "detail">(showModePicker ? "mode-picker" : "list")
@@ -246,89 +378,12 @@ function DashboardScreen({ onNewJob, onLoadJob, showModePicker }: { onNewJob: (m
       weekday: "short", day: "numeric", month: "long",
     })
     return (
-      <div className="flex flex-1 flex-col ios-slide-in">
-        <header className="border-b bg-background/80 backdrop-blur-xl px-4 py-3">
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setView("list")} aria-label="Zpět na seznam zakázek" className="flex items-center gap-0.5 text-primary text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded">
-              <ChevronLeft className="size-5" />
-              <span>Zpět</span>
-            </button>
-            <h1 className="text-lg font-semibold tracking-tight flex-1 text-center pr-12">Detail zakázky</h1>
-          </div>
-        </header>
-        <main className="flex flex-1 flex-col gap-4 px-4 py-4">
-          {/* Status */}
-          <div className="flex items-center justify-between">
-            <span className={`text-sm font-medium ${selectedJob.statusColor}`}>{selectedJob.status}</span>
-            <span className="text-xs text-muted-foreground">{dateFormatted}</span>
-          </div>
-
-          {/* Client */}
-          <div className="flex flex-col gap-1.5">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider px-4 pb-0.5">Klient</p>
-            <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
-              <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
-                <span className="text-sm">Jméno</span>
-                <span className="text-sm text-muted-foreground">{selectedJob.client}</span>
-              </div>
-              <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
-                <span className="text-sm">Telefon</span>
-                <span className="text-sm text-muted-foreground">{selectedJob.phone}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Addresses */}
-          <div className="flex flex-col gap-1.5">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider px-4 pb-0.5">Adresy</p>
-            <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
-              <div className="flex flex-col gap-0.5 px-4 py-3 min-h-[44px]">
-                <span className="text-xs text-muted-foreground">Nakládka</span>
-                <span className="text-sm">{selectedJob.pickup}</span>
-                <span className="text-xs text-muted-foreground">
-                  {selectedJob.floor.pickup}. patro{selectedJob.elevator.pickup ? " · výtah" : " · bez výtahu"}
-                </span>
-              </div>
-              <div className="flex flex-col gap-0.5 px-4 py-3 min-h-[44px]">
-                <span className="text-xs text-muted-foreground">Vykládka</span>
-                <span className="text-sm">{selectedJob.delivery}</span>
-                <span className="text-xs text-muted-foreground">
-                  {selectedJob.floor.delivery}. patro{selectedJob.elevator.delivery ? " · výtah" : " · bez výtahu"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
-                <span className="text-sm">Vzdálenost</span>
-                <span className="text-sm font-mono text-muted-foreground">{selectedJob.distance} km</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Price if exists */}
-          {selectedJob.price !== "—" && (
-            <div className="flex flex-col gap-1.5">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider px-4 pb-0.5">Cena</p>
-              <div className="rounded-2xl border border-border bg-card overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
-                  <span className="text-sm">Celkem</span>
-                  <span className="text-sm font-mono font-medium">{selectedJob.price}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          {selectedJob.actionable && (
-            <div className="flex flex-col gap-2 pt-2">
-              <Button size="lg" className="h-14 text-base gap-2" onClick={() => onLoadJob(selectedJob, "quick")}>
-                <Zap className="size-4" /> Rychlé zaměření
-              </Button>
-              <Button variant="outline" size="lg" className="h-14 text-base gap-2" onClick={() => onLoadJob(selectedJob, "detailed")}>
-                <FileText className="size-4" /> Detailní zaměření
-              </Button>
-            </div>
-          )}
-        </main>
-      </div>
+      <DetailView
+        selectedJob={selectedJob}
+        dateFormatted={dateFormatted}
+        onBack={() => setView("list")}
+        onLoadJob={onLoadJob}
+      />
     )
   }
 
@@ -443,9 +498,10 @@ export default function SurveyContent() {
     prefilled.delivery = { address: mockJob.delivery, floor: mockJob.floor.delivery, elevator: mockJob.elevator.delivery }
     prefilled.distance = mockJob.distance
     prefilled.date = mockJob.date
+    prefilled.fromCRM = true
     setJob(prefilled)
-    // Skip step 1 (job info already filled) → go to step 2
-    goTo(2)
+    // Go to step 1 with readonly CRM data
+    goTo(1)
   }, [setJob, goTo])
 
   const handleTabNavigate = useCallback((tab: "jobs" | "calendar" | "new" | "profile") => {
@@ -481,18 +537,18 @@ export default function SurveyContent() {
 
     if (isQuick) {
       // Quick mode: 1=job, 2=rooms%, 3=materials, 4=calc, 5=quote
-      if (step === 1) stepContent = <StepJobInfo job={job} onChange={setJob} onNext={() => goTo(2)} />
+      if (step === 1) stepContent = <StepJobInfo job={job} onChange={setJob} onNext={() => goTo(2)} readonly={job.fromCRM} />
       if (step === 2) stepContent = <StepQuickRooms job={job} onChange={setJob} onNext={() => goTo(3)} onBack={() => goTo(1)} />
       if (step === 3) stepContent = <StepMaterials job={job} onChange={setJob} onNext={() => goTo(4)} onBack={() => goTo(2)} />
       if (step === 4) stepContent = <StepCalculation job={job} onChange={setJob} onNext={() => goTo(5)} onBack={() => goTo(3)} />
-      if (step === 5) stepContent = <StepQuote job={job} onBack={() => goTo(4)} onNewJob={handleNewJobFromQuote} />
+      if (step === 5) stepContent = <StepQuote job={job} onBack={() => goTo(4)} onNewJob={handleNewJobFromQuote} onGoToCalc={() => goTo(4)} />
     } else {
       // Detailed mode: 1=job, 2=inventory, 3=materials, 4=calc, 5=quote
-      if (step === 1) stepContent = <StepJobInfo job={job} onChange={setJob} onNext={() => goTo(2)} />
+      if (step === 1) stepContent = <StepJobInfo job={job} onChange={setJob} onNext={() => goTo(2)} readonly={job.fromCRM} />
       if (step === 2) stepContent = <StepInventory job={job} onChange={setJob} onNext={() => goTo(3)} onBack={() => goTo(1)} />
       if (step === 3) stepContent = <StepMaterials job={job} onChange={setJob} onNext={() => goTo(4)} onBack={() => goTo(2)} />
       if (step === 4) stepContent = <StepCalculation job={job} onChange={setJob} onNext={() => goTo(5)} onBack={() => goTo(3)} />
-      if (step === 5) stepContent = <StepQuote job={job} onBack={() => goTo(4)} onNewJob={handleNewJobFromQuote} />
+      if (step === 5) stepContent = <StepQuote job={job} onBack={() => goTo(4)} onNewJob={handleNewJobFromQuote} onGoToCalc={() => goTo(4)} />
     }
 
     content = (
