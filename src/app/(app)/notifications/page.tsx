@@ -15,7 +15,7 @@ const TYPE_ICON: Record<MockNotification["type"], typeof CheckCircle2> = {
   approval: CheckCircle2, rejection: XCircle, message: MessageSquare, change: RefreshCw, comment: MessageCircle,
 }
 const TYPE_COLOR: Record<MockNotification["type"], string> = {
-  approval: "text-green-400", rejection: "text-red-400", message: "text-blue-400", change: "text-amber-400", comment: "text-purple-400",
+  approval: "text-status-execution", rejection: "text-status-notification", message: "text-status-survey", change: "text-status-approval", comment: "text-status-invoicing",
 }
 
 export default function NotificationsPage() {
@@ -70,7 +70,7 @@ function NotificationRow({ notification, onClick }: { notification: MockNotifica
       type="button"
       onClick={onClick}
       className={`flex items-start gap-3 px-4 py-3.5 min-h-[44px] w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2 ${
-        !notification.read ? "border-l-[3px] border-l-success bg-surface-2/40" : ""
+        !notification.read ? "border-l-[3px] border-l-status-notification bg-surface-2/40" : ""
       }`}
     >
       <div className="pt-0.5 shrink-0"><Icon className={`size-5 ${color}`} /></div>

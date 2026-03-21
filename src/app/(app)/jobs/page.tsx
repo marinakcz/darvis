@@ -12,10 +12,10 @@ function useIsMounted() {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; borderColor: string }> = {
-  survey: { label: "Zaměření", color: "text-blue-400", borderColor: "border-l-blue-400" },
-  approval: { label: "Schválení", color: "text-yellow-400", borderColor: "border-l-yellow-400" },
-  execution: { label: "Realizace", color: "text-green-400", borderColor: "border-l-green-400" },
-  invoicing: { label: "Fakturace", color: "text-purple-400", borderColor: "border-l-purple-400" },
+  survey: { label: "Zaměření", color: "text-status-survey", borderColor: "border-l-status-survey" },
+  approval: { label: "Schválení", color: "text-status-approval", borderColor: "border-l-status-approval" },
+  execution: { label: "Realizace", color: "text-status-execution", borderColor: "border-l-status-execution" },
+  invoicing: { label: "Fakturace", color: "text-status-invoicing", borderColor: "border-l-status-invoicing" },
 }
 
 /** Requires technician action: unfinished surveys, pending approvals */

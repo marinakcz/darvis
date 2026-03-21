@@ -38,10 +38,7 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
     weekday: "short", day: "numeric", month: "long",
   })
 
-  const statusBg = job.statusColor === "text-blue-400" ? "bg-blue-400/15 text-blue-400"
-    : job.statusColor === "text-green-400" ? "bg-green-400/15 text-green-400"
-    : job.statusColor === "text-purple-400" ? "bg-purple-400/15 text-purple-400"
-    : "bg-yellow-400/15 text-yellow-400"
+  const statusBg = `bg-surface-2 ${job.statusColor}`
 
   const floorInfo = (floor: number, elevator: boolean) =>
     `${floor}. patro${elevator ? " s výtahem" : " bez výtahu"}`

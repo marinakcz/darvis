@@ -112,9 +112,9 @@ type AlertVariant = "warning" | "error" | "success" | "info"
 
 const ALERT_STYLES: Record<AlertVariant, string> = {
   warning: "border-warning/30 bg-warning/8 text-warning",
-  error: "border-red-500/30 bg-red-500/8 text-red-400",
-  success: "border-emerald-500/30 bg-emerald-500/8 text-emerald-400",
-  info: "border-blue-500/30 bg-blue-500/8 text-blue-400",
+  error: "border-status-notification/30 bg-status-notification/8 text-status-notification",
+  success: "border-success/30 bg-success/8 text-success",
+  info: "border-status-survey/30 bg-status-survey/8 text-status-survey",
 }
 
 /** Inline alert banner */

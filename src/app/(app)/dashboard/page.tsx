@@ -11,17 +11,17 @@ function useIsMounted() {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; borderColor: string }> = {
-  survey: { label: "Zaměření", color: "text-blue-400", borderColor: "border-l-blue-400" },
-  execution: { label: "Stěhování", color: "text-green-400", borderColor: "border-l-green-400" },
-  approval: { label: "Schválení", color: "text-yellow-400", borderColor: "border-l-yellow-400" },
-  invoicing: { label: "Fakturace", color: "text-purple-400", borderColor: "border-l-purple-400" },
+  survey: { label: "Zaměření", color: "text-status-survey", borderColor: "border-l-status-survey" },
+  execution: { label: "Stěhování", color: "text-status-execution", borderColor: "border-l-status-execution" },
+  approval: { label: "Schválení", color: "text-status-approval", borderColor: "border-l-status-approval" },
+  invoicing: { label: "Fakturace", color: "text-status-invoicing", borderColor: "border-l-status-invoicing" },
 }
 
 const NOTIF_ICON: Record<MockNotification["type"], typeof CheckCircle2> = {
   approval: CheckCircle2, rejection: XCircle, message: MessageSquare, change: RefreshCw, comment: MessageCircle,
 }
 const NOTIF_COLOR: Record<MockNotification["type"], string> = {
-  approval: "text-emerald-400", rejection: "text-red-400", message: "text-blue-400", change: "text-amber-400", comment: "text-purple-400",
+  approval: "text-status-execution", rejection: "text-status-notification", message: "text-status-survey", change: "text-status-approval", comment: "text-status-invoicing",
 }
 
 const ATTENTION_ICON: Record<string, typeof AlertCircle> = {
@@ -46,8 +46,8 @@ function getJobsForDate(date: string): MockJob[] {
 function getDateDots(date: string): string[] {
   const jobs = getJobsForDate(date)
   const dots: string[] = []
-  if (jobs.some((j) => j.status === "survey")) dots.push("bg-blue-400")
-  if (jobs.some((j) => j.status === "execution")) dots.push("bg-green-400")
+  if (jobs.some((j) => j.status === "survey")) dots.push("bg-status-survey")
+  if (jobs.some((j) => j.status === "execution")) dots.push("bg-status-execution")
   return dots
 }
 
@@ -89,12 +89,12 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3 mt-1">
                 {daySurveys > 0 && (
                   <span className="flex items-center gap-1.5 text-xs text-text-secondary">
-                    <span className="size-2 rounded-full bg-blue-400" />{daySurveys}× zaměření
+                    <span className="size-2 rounded-full bg-status-survey" />{daySurveys}× zaměření
                   </span>
                 )}
                 {dayExecutions > 0 && (
                   <span className="flex items-center gap-1.5 text-xs text-text-secondary">
-                    <span className="size-2 rounded-full bg-green-400" />{dayExecutions}× stěhování
+                    <span className="size-2 rounded-full bg-status-execution" />{dayExecutions}× stěhování
                   </span>
                 )}
               </div>

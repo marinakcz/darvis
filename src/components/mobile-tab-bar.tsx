@@ -38,7 +38,7 @@ export function MobileTabBar({ activeTab }: MobileTabBarProps) {
             <div className="relative">
               <Icon className="size-5" />
               {showBadge && (
-                <span className="absolute -top-1 -right-1.5 flex items-center justify-center size-4 rounded-full bg-red-500 text-[9px] font-bold text-white">
+                <span className="absolute -top-1 -right-1.5 flex items-center justify-center size-4 rounded-full bg-status-notification text-[9px] font-bold text-white">
                   {unreadCount}
                 </span>
               )}
