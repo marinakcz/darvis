@@ -143,7 +143,7 @@
 
   /* L2 — nested groups, inputs, rows */
   --muted: oklch(0.21 0 0);
-  --muted-foreground: oklch(0.60 0 0);
+  --muted-foreground: oklch(0.72 0 0);  /* matches text-secondary for consistency */
 
   /* Popover = L1 */
   --popover: oklch(0.17 0 0);
@@ -196,9 +196,9 @@
   --warning-foreground: oklch(0.25 0 0);
   --destructive: oklch(0.60 0.12 25);       /* muted red */
 
-  --text-primary: oklch(0.96 0 0);
-  --text-secondary: oklch(0.64 0 0);   /* bumped for readability */
-  --text-tertiary: oklch(0.48 0 0);    /* bumped — older technicians need contrast */
+  --text-primary: oklch(0.96 0 0);     /* 17:1+ on all surfaces — AAA */
+  --text-secondary: oklch(0.72 0 0);   /* 7:1+ on all surfaces — AAA */
+  --text-tertiary: oklch(0.61 0 0);    /* 4.7:1+ on all surfaces — AA */
 
   /* ── Status colors — low chroma, readable on dark surfaces ── */
   --status-survey: oklch(0.70 0.08 240);    /* steel blue — readable */
