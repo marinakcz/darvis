@@ -1,41 +1,50 @@
-import type { Metadata } from "next"
+"use client"
 
-export const metadata: Metadata = {
-  title: "Nabídka stěhování — Stěhování Praha",
-  description: "Vaše nabídka na stěhování od Stěhování Praha",
+import { use, useSyncExternalStore } from "react"
+import type { Job, SurveyRoom } from "@/lib/types"
+import { ROOM_LABELS } from "@/lib/types"
+import { calculateJob, formatPrice, formatVolume } from "@/lib/calculator"
+
+function useIsMounted() {
+  return useSyncExternalStore(() => () => {}, () => true, () => false)
 }
 
-// Mock data for the public offer — in future this will come from DB via token lookup
-const MOCK_OFFER = {
-  companyName: "Stěhování Praha",
-  companyPhone: "+420 800 123 456",
-  client: "Petr Dvořák",
-  date: "čt 20. března 2026",
-  pickup: "Křižíkova 42, Praha 8 · 3. patro bez výtahu",
-  delivery: "Levského 3112, Praha 4 · 1. patro s výtahem",
-  distance: "14 km",
-  totalPrice: "24 800 Kč",
-  volume: "12.4 m³",
-  trucks: 1,
-  workers: 2,
-  hours: "4.5 hod",
-  breakdown: [
-    { label: "Doprava", value: "8 168 Kč" },
-    { label: "Práce", value: "4 050 Kč" },
-    { label: "Materiál", value: "1 720 Kč" },
-    { label: "Příplatek patra", value: "1 350 Kč" },
-  ],
-  rooms: [
-    { name: "Ložnice", detail: "25%" },
-    { name: "Obývací pokoj", detail: "40%" },
-    { name: "Kuchyň", detail: "15%" },
-  ],
-  note: "",
+function loadOffer(token: string): Job | null {
+  try {
+    const saved = localStorage.getItem(`darvis-survey-${token}`)
+    if (saved) return JSON.parse(saved)
+  } catch { /* ignore */ }
+  return null
 }
 
-export default async function PublicOfferPage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params
-  const offer = MOCK_OFFER // In future: look up by token
+function getRoomSummary(room: SurveyRoom): string {
+  if (room.mode === "quick") return `${room.percent}%`
+  return `${room.items.reduce((sum, i) => sum + i.quantity, 0)} pol.`
+}
+
+export default function PublicOfferPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = use(params)
+  const mounted = useIsMounted()
+
+  if (!mounted) return null
+
+  const job = loadOffer(token)
+
+  if (!job || job.surveyRooms.length === 0) {
+    return (
+      <div className="min-h-screen bg-white text-zinc-900 flex items-center justify-center">
+        <div className="text-center px-6">
+          <h1 className="text-xl font-bold mb-2">Nabídka nenalezena</h1>
+          <p className="text-sm text-zinc-500">Odkaz na nabídku není platný nebo vypršel.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const calc = calculateJob(job)
+  const dateFormatted = job.date
+    ? new Date(job.date).toLocaleDateString("cs-CZ", { weekday: "short", day: "numeric", month: "long", year: "numeric" })
+    : "—"
 
   return (
     <div className="min-h-screen bg-white text-zinc-900">
@@ -43,11 +52,11 @@ export default async function PublicOfferPage({ params }: { params: Promise<{ to
       <header className="border-b border-zinc-200 px-4 py-4">
         <div className="mx-auto max-w-lg flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-zinc-900">{offer.companyName}</h1>
+            <h1 className="text-lg font-bold text-zinc-900">Stěhování Praha</h1>
             <p className="text-xs text-zinc-500">Profesionální stěhovací služby</p>
           </div>
           <a
-            href={`tel:${offer.companyPhone.replace(/\s/g, "")}`}
+            href="tel:+420800123456"
             className="flex items-center gap-1.5 rounded-lg bg-zinc-900 text-white px-3 py-2 text-sm font-medium hover:bg-zinc-800 transition-colors"
           >
             Zavolat
@@ -59,49 +68,53 @@ export default async function PublicOfferPage({ params }: { params: Promise<{ to
         {/* Title + price */}
         <div className="text-center">
           <p className="text-sm text-zinc-500 mb-1">Nabídka stěhování pro</p>
-          <h2 className="text-xl font-bold mb-4">{offer.client}</h2>
-          <p className="text-4xl font-bold font-mono">{offer.totalPrice}</p>
-          <p className="text-sm text-zinc-500 mt-1">{offer.date}</p>
+          <h2 className="text-xl font-bold mb-4">{job.client.name || "Klient"}</h2>
+          <p className="text-4xl font-bold font-mono">{formatPrice(calc.totalPrice)}</p>
+          <p className="text-sm text-zinc-500 mt-1">{dateFormatted}</p>
         </div>
 
         {/* Summary stats */}
         <div className="grid grid-cols-4 gap-2 text-center">
-          <StatBox label="Objem" value={offer.volume} />
-          <StatBox label="Aut" value={`${offer.trucks}x`} />
-          <StatBox label="Lidí" value={`${offer.workers}`} />
-          <StatBox label="Hodin" value={offer.hours} />
+          <StatBox label="Objem" value={formatVolume(calc.totalVolume)} />
+          <StatBox label="Aut" value={`${calc.truckCount}x`} />
+          <StatBox label="Lidí" value={`${calc.workerCount}`} />
+          <StatBox label="Hodin" value={`${calc.estimatedHours}h`} />
         </div>
 
         {/* Route */}
         <section className="rounded-xl border border-zinc-200 overflow-hidden divide-y divide-zinc-100">
           <div className="px-4 py-3">
             <p className="text-xs text-zinc-400 mb-0.5">Odkud</p>
-            <p className="text-sm">{offer.pickup}</p>
+            <p className="text-sm">{job.pickup.address}</p>
+            <p className="text-xs text-zinc-400">{job.pickup.floor}. patro{job.pickup.elevator ? " s výtahem" : " bez výtahu"}</p>
           </div>
           <div className="px-4 py-3">
             <p className="text-xs text-zinc-400 mb-0.5">Kam</p>
-            <p className="text-sm">{offer.delivery}</p>
+            <p className="text-sm">{job.delivery.address}</p>
+            <p className="text-xs text-zinc-400">{job.delivery.floor}. patro{job.delivery.elevator ? " s výtahem" : " bez výtahu"}</p>
           </div>
           <div className="flex items-center justify-between px-4 py-2.5">
             <span className="text-xs text-zinc-400">Vzdálenost</span>
-            <span className="text-sm font-mono">{offer.distance}</span>
+            <span className="text-sm font-mono">{job.distance} km</span>
           </div>
         </section>
 
         {/* Rooms */}
-        <section className="rounded-xl border border-zinc-200 overflow-hidden">
-          <div className="px-4 py-2.5 bg-zinc-50 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-            Rozsah práce
-          </div>
-          <div className="divide-y divide-zinc-100">
-            {offer.rooms.map((room) => (
-              <div key={room.name} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                <span>{room.name}</span>
-                <span className="font-mono text-zinc-500">{room.detail}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+        {job.surveyRooms.length > 0 && (
+          <section className="rounded-xl border border-zinc-200 overflow-hidden">
+            <div className="px-4 py-2.5 bg-zinc-50 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              Rozsah práce
+            </div>
+            <div className="divide-y divide-zinc-100">
+              {job.surveyRooms.map((room) => (
+                <div key={room.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                  <span>{ROOM_LABELS[room.type]}{room.customName ? ` (${room.customName})` : ""}</span>
+                  <span className="font-mono text-zinc-500">{getRoomSummary(room)}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Price breakdown */}
         <section className="rounded-xl border border-zinc-200 overflow-hidden">
@@ -109,15 +122,14 @@ export default async function PublicOfferPage({ params }: { params: Promise<{ to
             Rozpis ceny
           </div>
           <div className="divide-y divide-zinc-100">
-            {offer.breakdown.map((item) => (
-              <div key={item.label} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                <span className="text-zinc-600">{item.label}</span>
-                <span className="font-mono">{item.value}</span>
-              </div>
-            ))}
+            <BreakdownRow label="Doprava" value={calc.breakdown.trucks} />
+            <BreakdownRow label="Práce" value={calc.breakdown.labor} />
+            <BreakdownRow label="Materiál + služby" value={calc.breakdown.materials} />
+            {calc.breakdown.floorSurcharge > 0 && <BreakdownRow label="Příplatek patra" value={calc.breakdown.floorSurcharge} />}
+            {calc.breakdown.distanceSurcharge > 0 && <BreakdownRow label="Příplatek vzdálenost" value={calc.breakdown.distanceSurcharge} />}
             <div className="flex items-center justify-between px-4 py-3 text-base font-bold">
               <span>Celkem</span>
-              <span className="font-mono">{offer.totalPrice}</span>
+              <span className="font-mono">{formatPrice(calc.totalPrice)}</span>
             </div>
           </div>
         </section>
@@ -132,13 +144,13 @@ export default async function PublicOfferPage({ params }: { params: Promise<{ to
         {/* CTA */}
         <div className="flex flex-col gap-3 pt-2">
           <a
-            href={`tel:${offer.companyPhone.replace(/\s/g, "")}`}
+            href="tel:+420800123456"
             className="flex items-center justify-center h-14 rounded-xl bg-zinc-900 text-white text-base font-medium hover:bg-zinc-800 transition-colors"
           >
             Mám dotaz — zavolat
           </a>
           <p className="text-center text-xs text-zinc-400">
-            {offer.companyName} · {offer.companyPhone}
+            Stěhování Praha · +420 800 123 456
           </p>
         </div>
       </main>
@@ -151,6 +163,15 @@ function StatBox({ label, value }: { label: string; value: string }) {
     <div className="flex flex-col items-center gap-0.5 rounded-lg border border-zinc-200 py-2.5">
       <span className="font-mono text-base font-bold">{value}</span>
       <span className="text-[10px] text-zinc-400">{label}</span>
+    </div>
+  )
+}
+
+function BreakdownRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+      <span className="text-zinc-600">{label}</span>
+      <span className="font-mono">{formatPrice(value)}</span>
     </div>
   )
 }
