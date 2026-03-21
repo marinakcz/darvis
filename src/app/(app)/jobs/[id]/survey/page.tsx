@@ -173,7 +173,7 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
           if (isExpanded) {
             return (
               <div key={room.id} className="flex flex-col gap-0">
-                <button type="button" onClick={() => toggleRoom(room.id)}
+                <button type="button" onClick={() => toggleRoom(room.id)} aria-expanded={true}
                   className="flex items-center justify-between rounded-t-2xl bg-surface-1 px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <Icon className="size-4 text-text-tertiary shrink-0" />
@@ -191,12 +191,12 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-text-tertiary">Režim:</span>
                       <div className="flex rounded-lg bg-surface-2 overflow-hidden">
-                        <button type="button" onClick={() => toggleRoomMode(room.id)}
-                          className={`px-3 py-1.5 text-xs font-medium transition-colors ${room.mode === "quick" ? "bg-success text-success-foreground" : "text-text-secondary hover:bg-surface-3"}`}>
+                        <button type="button" onClick={() => toggleRoomMode(room.id)} aria-pressed={room.mode === "quick"}
+                          className={`px-3 py-2 text-xs font-medium min-h-[44px] transition-colors ${room.mode === "quick" ? "bg-success text-success-foreground" : "text-text-secondary hover:bg-surface-3"}`}>
                           Rychlý
                         </button>
-                        <button type="button" onClick={() => toggleRoomMode(room.id)}
-                          className={`px-3 py-1.5 text-xs font-medium transition-colors ${room.mode === "detailed" ? "bg-success text-success-foreground" : "text-text-secondary hover:bg-surface-3"}`}>
+                        <button type="button" onClick={() => toggleRoomMode(room.id)} aria-pressed={room.mode === "detailed"}
+                          className={`px-3 py-2 text-xs font-medium min-h-[44px] transition-colors ${room.mode === "detailed" ? "bg-success text-success-foreground" : "text-text-secondary hover:bg-surface-3"}`}>
                           Detailní
                         </button>
                       </div>
@@ -237,7 +237,7 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
           }
 
           return (
-            <button key={room.id} type="button" onClick={() => toggleRoom(room.id)}
+            <button key={room.id} type="button" onClick={() => toggleRoom(room.id)} aria-expanded={false}
               className="flex items-center justify-between rounded-2xl bg-surface-1 px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Icon className="size-4 text-text-tertiary shrink-0" />
@@ -263,7 +263,7 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
         {/* Materials */}
         {job.surveyRooms.length > 0 && (
           <>
-            <button type="button" onClick={() => setMaterialsExpanded((prev) => !prev)}
+            <button type="button" onClick={() => setMaterialsExpanded((prev) => !prev)} aria-expanded={materialsExpanded}
               className="flex items-center justify-between rounded-2xl bg-surface-1 px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2">
               <div className="flex items-center gap-2">
                 <Package className="size-4 text-text-tertiary" />
@@ -285,10 +285,10 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
                       <span className="text-sm">{MATERIAL_LABELS[key]}</span>
                       <div className="flex items-center gap-1">
                         <button type="button" onClick={() => updateMaterial(key, -1)}
-                          className="flex items-center justify-center h-9 w-9 rounded-lg bg-surface-3 text-lg text-text-secondary hover:bg-surface-3/80 transition-colors">-</button>
+                          className="flex items-center justify-center h-11 w-11 rounded-lg bg-surface-3 text-lg text-text-secondary hover:bg-surface-3/80 transition-colors">-</button>
                         <span className="w-8 text-center font-mono text-sm">{value}</span>
                         <button type="button" onClick={() => updateMaterial(key, 1)}
-                          className="flex items-center justify-center h-9 w-9 rounded-lg bg-surface-3 text-lg text-text-secondary hover:bg-surface-3/80 transition-colors">+</button>
+                          className="flex items-center justify-center h-11 w-11 rounded-lg bg-surface-3 text-lg text-text-secondary hover:bg-surface-3/80 transition-colors">+</button>
                         <span className="text-xs text-text-tertiary w-8">{MATERIAL_UNITS[key]}</span>
                       </div>
                     </div>

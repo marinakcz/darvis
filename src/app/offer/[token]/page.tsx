@@ -101,7 +101,7 @@ export default function PublicOfferPage({ params }: { params: Promise<{ token: s
 
         {/* Rooms */}
         {job.surveyRooms.length > 0 && (
-          <section className="rounded-xl border border-zinc-200 overflow-hidden">
+          <section className="rounded-xl border border-zinc-200 overflow-hidden" aria-label="Rozsah práce">
             <div className="px-4 py-2.5 bg-zinc-50 text-xs font-medium text-zinc-500 uppercase tracking-wider">
               Rozsah práce
             </div>
@@ -117,7 +117,7 @@ export default function PublicOfferPage({ params }: { params: Promise<{ token: s
         )}
 
         {/* Price breakdown */}
-        <section className="rounded-xl border border-zinc-200 overflow-hidden">
+        <section className="rounded-xl border border-zinc-200 overflow-hidden" aria-label="Rozpis ceny">
           <div className="px-4 py-2.5 bg-zinc-50 text-xs font-medium text-zinc-500 uppercase tracking-wider">
             Rozpis ceny
           </div>

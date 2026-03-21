@@ -76,6 +76,7 @@ export default function JobsListPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Hledat klienta nebo adresu..."
+            aria-label="Hledat zakázky"
             className="w-full h-11 rounded-xl bg-surface-1 pl-10 pr-4 text-sm outline-none placeholder:text-text-tertiary focus-visible:ring-2 focus-visible:ring-ring/50 transition-colors"
           />
         </div>
@@ -102,6 +103,7 @@ export default function JobsListPage() {
             <button
               type="button"
               onClick={() => setDoneExpanded((p) => !p)}
+              aria-expanded={doneExpanded}
               className="flex items-center justify-between px-1 py-1"
             >
               <span className="text-xs text-text-tertiary uppercase tracking-wider">

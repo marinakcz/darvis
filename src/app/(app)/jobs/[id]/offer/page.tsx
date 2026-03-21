@@ -94,6 +94,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
             <div className="flex items-center gap-2">
               <Input type="number" inputMode="numeric" value={priceOverride ?? calc.totalPrice}
                 onChange={(e) => setPriceOverride(Number(e.target.value) || 0)}
+                aria-label="Cena nabídky"
                 className="w-40 text-center font-mono text-2xl font-bold bg-surface-2 border-0" autoFocus />
               <span className="text-lg text-text-secondary">Kč</span>
               <button type="button" onClick={() => setEditingPrice(false)}
@@ -175,6 +176,7 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
           <SectionHeader>Poznámka pro klienta</SectionHeader>
           <textarea value={quoteNote} onChange={(e) => setQuoteNote(e.target.value)}
             placeholder="Doplňující informace pro klienta..."
+            aria-label="Poznámka pro klienta"
             className="w-full min-h-[80px] rounded-2xl bg-surface-1 px-4 py-3 text-sm transition-colors outline-none placeholder:text-text-tertiary focus-visible:ring-2 focus-visible:ring-ring/50 resize-y" />
         </div>
 
@@ -204,7 +206,7 @@ function CollapsibleSection({ title, expanded, onToggle, children }: {
 }) {
   return (
     <>
-      <button type="button" onClick={onToggle}
+      <button type="button" onClick={onToggle} aria-expanded={expanded}
         className="flex items-center justify-between rounded-2xl bg-surface-1 px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2">
         <span className="text-sm font-medium">{title}</span>
         {expanded ? <ChevronUp className="size-4 text-text-tertiary" /> : <ChevronDown className="size-4 text-text-tertiary" />}

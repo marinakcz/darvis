@@ -103,6 +103,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => router.push("/profile")}
+            aria-label="Profil"
             className="flex items-center justify-center size-11 rounded-full bg-surface-2 text-text-secondary text-sm font-semibold shrink-0 mt-1 hover:bg-surface-3 transition-colors"
           >
             JT
@@ -111,7 +112,7 @@ export default function DashboardPage() {
       </header>
 
       {/* Day picker */}
-      <div className="flex items-center gap-0.5 px-4 py-3">
+      <div className="flex items-center gap-0.5 px-4 py-3" role="tablist" aria-label="Výběr dne">
         {weekDays.map((day) => {
           const isSelected = day.date === selectedDate
           const dots = getDateDots(day.date)
@@ -119,6 +120,9 @@ export default function DashboardPage() {
             <button
               key={day.date}
               type="button"
+              role="tab"
+              aria-selected={isSelected}
+              aria-label={`${day.dayName} ${day.dayNum}`}
               onClick={() => setSelectedDate(day.date)}
               className={`flex flex-col items-center gap-0.5 flex-1 py-2 rounded-xl transition-colors ${
                 isSelected ? "text-text-primary bg-surface-1" : "text-text-tertiary"

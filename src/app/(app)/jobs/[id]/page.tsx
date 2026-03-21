@@ -136,6 +136,7 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
         <button
           type="button"
           onClick={() => setAccessExpanded((prev) => !prev)}
+          aria-expanded={accessExpanded}
           className="flex items-center justify-between rounded-2xl bg-surface-1 px-4 py-3 min-h-[44px] w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2"
         >
           <span className="text-sm font-medium text-text-secondary">Přístup</span>
@@ -157,6 +158,7 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
             value={techNotes}
             onChange={(e) => setTechNotes(e.target.value)}
             placeholder="Vaše poznámky k zakázce..."
+            aria-label="Poznámky technika"
             className="w-full min-h-[80px] rounded-2xl bg-surface-1 px-4 py-3 text-sm transition-colors outline-none placeholder:text-text-tertiary focus-visible:ring-2 focus-visible:ring-ring/50 resize-y"
           />
         </div>
@@ -194,13 +196,14 @@ function AccessRow({ label, options }: { label: string; options: string[] }) {
   return (
     <div className="flex items-center justify-between gap-2 px-4 py-2.5">
       <span className="text-sm text-text-secondary shrink-0">{label}</span>
-      <div className="flex gap-1">
+      <div className="flex gap-1" role="group" aria-label={label}>
         {options.map((opt, i) => (
           <button
             key={opt}
             type="button"
             onClick={() => setSelected(i)}
-            className={`px-2.5 py-1 text-xs rounded-lg transition-colors ${
+            aria-pressed={selected === i}
+            className={`px-2.5 py-2 text-xs rounded-lg min-h-[44px] transition-colors ${
               selected === i
                 ? "bg-success text-success-foreground font-medium"
                 : "bg-surface-3 text-text-secondary hover:bg-surface-3/80"
