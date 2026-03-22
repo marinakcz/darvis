@@ -2,37 +2,15 @@
 
 import { use, useState, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, ChevronDown, ChevronUp, Truck, Pencil, Share2 } from "lucide-react"
+import { ChevronLeft, ChevronDown, ChevronUp, Truck, Pencil, Share2, Loader2 } from "lucide-react"
 import type { Job, SurveyRoom } from "@/lib/types"
-import { createEmptyJob, ROOM_LABELS } from "@/lib/types"
-import { getMockJobById } from "@/lib/mock-data"
+import { ROOM_LABELS } from "@/lib/types"
 import { calculateJob, formatPrice, formatVolume } from "@/lib/calculator"
 import { VEHICLES } from "@/lib/constants"
 import { RoomIcon } from "@/components/icons"
 import { Surface, Group, Row, Stat, ActionButton, GhostButton, SectionHeader } from "@/components/ds"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
-
-function storageKey(jobId: string) { return `darvis-survey-${jobId}` }
-
-function loadJob(jobId: string): Job {
-  try {
-    const saved = localStorage.getItem(storageKey(jobId))
-    if (saved) return JSON.parse(saved)
-  } catch { /* ignore */ }
-  const mock = getMockJobById(jobId)
-  if (mock) {
-    const prefilled = createEmptyJob("quick")
-    prefilled.client = { name: mock.client, phone: mock.phone, email: "" }
-    prefilled.pickup = { address: mock.pickup, floor: mock.floor.pickup, elevator: mock.elevator.pickup }
-    prefilled.delivery = { address: mock.delivery, floor: mock.floor.delivery, elevator: mock.elevator.delivery }
-    prefilled.distance = mock.distance
-    prefilled.date = mock.date
-    prefilled.fromCRM = true
-    return prefilled
-  }
-  return createEmptyJob("quick")
-}
 
 function useIsMounted() {
   return useSyncExternalStore(() => () => {}, () => true, () => false)
@@ -43,19 +21,83 @@ function getRoomSummary(room: SurveyRoom): string {
   return `${room.items.reduce((sum, i) => sum + i.quantity, 0)} pol.`
 }
 
+/** Load job from DB API */
+function useJobFromDb(jobId: string, mounted: boolean) {
+  const [job, setJob] = useState<Job | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loaded, setLoaded] = useState(false)
+
+  if (mounted && !loaded) {
+    setLoaded(true)
+    fetch(`/api/jobs/${jobId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("not found")
+        return r.json()
+      })
+      .then((data) => {
+        const rooms = (data.rooms || []) as Array<Record<string, unknown>>
+        setJob({
+          mode: "quick",
+          jobType: data.jobType || "apartment",
+          vehicleId: data.vehicleId || "medium-24",
+          client: data.customer
+            ? { name: data.customer.name || "", phone: data.customer.phone || "", email: data.customer.email || "" }
+            : { name: "", phone: "", email: "" },
+          pickup: { address: data.pickupAddress || "", floor: data.pickupFloor || 0, elevator: data.pickupElevator || false },
+          delivery: { address: data.deliveryAddress || "", floor: data.deliveryFloor || 0, elevator: data.deliveryElevator || false },
+          distance: Number(data.distance) || 0,
+          date: data.date || "",
+          rooms: [],
+          quickRooms: [],
+          surveyRooms: rooms.map((r): SurveyRoom => ({
+            id: r.id as string,
+            type: r.type as SurveyRoom["type"],
+            customName: r.customName as string | undefined,
+            mode: (r.mode as SurveyRoom["mode"]) || "quick",
+            percent: (r.percent as number) || 0,
+            items: ((r.items as Array<Record<string, unknown>>) || []).map((i) => ({
+              id: i.id as string,
+              catalogId: i.catalogId as string,
+              quantity: (i.quantity as number) || 1,
+              services: { disassembly: (i.disassembly as boolean) || false, packing: (i.packing as boolean) || false, assembly: (i.assembly as boolean) || false },
+              notes: i.notes as string | undefined,
+            })),
+          })),
+          materials: data.materials || { boxes: 0, crates: 0, stretchWrap: 0, bubbleWrap: 0, packingPaper: 0 },
+          access: data.access || { parking: "easy", narrowPassage: false, narrowNote: "", entryDistance: "short" },
+          fromCRM: data.fromCRM || false,
+          technicianNotes: data.technicianNotes,
+          dispatcherNote: data.dispatcherNote,
+        } as Job)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }
+
+  return { job, loading }
+}
+
 export default function OfferPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params)
   const mounted = useIsMounted()
   const router = useRouter()
-  const [job] = useState<Job>(() => loadJob(jobId))
+  const { job, loading } = useJobFromDb(jobId, mounted)
   const [priceOverride, setPriceOverride] = useState<number | null>(null)
   const [editingPrice, setEditingPrice] = useState(false)
   const [quoteNote, setQuoteNote] = useState("")
   const [breakdownExpanded, setBreakdownExpanded] = useState(false)
   const [roomsExpanded, setRoomsExpanded] = useState(false)
   const [detailsExpanded, setDetailsExpanded] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [offerUrl, setOfferUrl] = useState<string | null>(null)
 
-  if (!mounted) return null
+  if (!mounted || loading || !job) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-text-tertiary" />
+      </div>
+    )
+  }
 
   const calc = calculateJob(job)
   const displayPrice = priceOverride ?? calc.totalPrice
@@ -64,10 +106,25 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
     ? new Date(job.date).toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     : "—"
 
-  function handleShare() {
-    const text = `Nabídka stěhování – ${formatPrice(displayPrice)}\n${job.client.name}\n${dateFormatted}`
-    if (navigator.share) { navigator.share({ title: "Nabídka stěhování", text }).catch(() => {}) }
-    else { navigator.clipboard.writeText(text).catch(() => {}) }
+  async function handleSendOffer() {
+    setSending(true)
+    try {
+      const res = await fetch(`/api/jobs/${jobId}/offer`, { method: "POST" })
+      if (res.ok) {
+        const data = await res.json()
+        const fullUrl = `${window.location.origin}/offer/${data.token}`
+        setOfferUrl(fullUrl)
+
+        // Share or copy
+        const text = `Nabídka stěhování – ${formatPrice(displayPrice)}\n${job?.client.name ?? ""}\n${dateFormatted}\n\n${fullUrl}`
+        if (navigator.share) {
+          navigator.share({ title: "Nabídka stěhování", text }).catch(() => {})
+        } else {
+          navigator.clipboard.writeText(fullUrl).catch(() => {})
+        }
+      }
+    } catch { /* ignore */ }
+    setSending(false)
   }
 
   return (
@@ -180,6 +237,14 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
             className="w-full min-h-[80px] rounded-2xl bg-surface-1 px-4 py-3 text-sm transition-colors outline-none placeholder:text-text-tertiary focus-visible:ring-2 focus-visible:ring-ring/50 resize-y" />
         </div>
 
+        {/* Offer URL */}
+        {offerUrl && (
+          <Surface className="px-4 py-3">
+            <p className="text-xs text-text-tertiary mb-1">Odkaz na nabídku:</p>
+            <p className="text-sm font-mono text-success break-all">{offerUrl}</p>
+          </Surface>
+        )}
+
         <p className="text-center text-xs text-text-tertiary">
           Cena je orientační a může se lišit dle skutečného rozsahu práce. Platnost nabídky 14 dní.
         </p>
@@ -188,9 +253,9 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
       {/* Sticky bottom */}
       <div className="sticky bottom-0 z-40 border-t border-border bg-surface-0/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
         <div className="flex flex-col gap-2 px-4 py-3">
-          <ActionButton onClick={handleShare}>
-            <Share2 className="size-5" />
-            Odeslat nabídku klientovi
+          <ActionButton onClick={handleSendOffer} disabled={sending || job.surveyRooms.length === 0}>
+            {sending ? <Loader2 className="size-5 animate-spin" /> : <Share2 className="size-5" />}
+            {offerUrl ? "Sdílet znovu" : "Odeslat nabídku klientovi"}
           </ActionButton>
           <GhostButton onClick={() => router.push(`/jobs/${jobId}/survey`)}>
             ← Zpět na zaměření

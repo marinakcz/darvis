@@ -2,30 +2,66 @@
 
 import { use, useState, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, ChevronDown, ChevronUp, Phone, Navigation2, ClipboardCheck } from "lucide-react"
+import { ChevronLeft, ChevronDown, ChevronUp, Phone, Navigation2, ClipboardCheck, Loader2 } from "lucide-react"
 import { NavigationSheet, useNavigationSheet } from "@/components/navigation-sheet"
 import { Surface, Group, Row, Alert, ActionButton, SectionHeader } from "@/components/ds"
-import { getMockJobById } from "@/lib/mock-data"
 
 function useIsMounted() {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  )
+  return useSyncExternalStore(() => () => {}, () => true, () => false)
+}
+
+interface JobDetail {
+  id: string
+  jobType: string
+  status: string
+  date: string | null
+  pickupAddress: string
+  pickupFloor: number
+  pickupElevator: boolean
+  deliveryAddress: string
+  deliveryFloor: number
+  deliveryElevator: boolean
+  distance: string
+  dispatcherNote: string | null
+  technicianNotes: string | null
+  customer: { name: string; phone: string; email: string } | null
 }
 
 export default function BriefingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const mounted = useIsMounted()
   const router = useRouter()
+  const [job, setJob] = useState<JobDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loaded, setLoaded] = useState(false)
   const [accessExpanded, setAccessExpanded] = useState(false)
   const [techNotes, setTechNotes] = useState("")
   const { navAddress, openNav, closeNav } = useNavigationSheet()
 
-  if (!mounted) return null
+  // Load from DB
+  if (mounted && !loaded) {
+    setLoaded(true)
+    fetch(`/api/jobs/${id}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("not found")
+        return r.json()
+      })
+      .then((data) => {
+        setJob(data)
+        setTechNotes(data.technicianNotes || "")
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }
 
-  const job = getMockJobById(id)
+  if (!mounted || loading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-text-tertiary" />
+      </div>
+    )
+  }
+
   if (!job) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -34,14 +70,14 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
     )
   }
 
-  const dateFormatted = new Date(job.date).toLocaleDateString("cs-CZ", {
-    weekday: "short", day: "numeric", month: "long",
-  })
-
-  const statusBg = `bg-surface-2 ${job.statusColor}`
+  const dateFormatted = job.date
+    ? new Date(job.date).toLocaleDateString("cs-CZ", { weekday: "short", day: "numeric", month: "long" })
+    : "—"
 
   const floorInfo = (floor: number, elevator: boolean) =>
     `${floor}. patro${elevator ? " s výtahem" : " bez výtahu"}`
+
+  const canStartSurvey = job.status === "draft" || job.status === "survey"
 
   return (
     <div className="flex flex-1 flex-col ios-slide-in">
@@ -50,17 +86,18 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/jobs")}
             aria-label="Zpět"
             className="flex items-center justify-center size-9 -ml-1 rounded-lg text-text-secondary hover:bg-surface-2 active:bg-surface-2 transition-colors"
           >
             <ChevronLeft className="size-5" />
           </button>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="text-sm font-semibold truncate">{job.client}</span>
-            <span className="text-[11px] text-text-tertiary truncate">{job.name.split(" — ")[1]}</span>
+            <span className="text-sm font-semibold truncate">{job.customer?.name || "Nový klient"}</span>
+            <span className="text-[11px] text-text-tertiary truncate">
+              {(job.pickupAddress || "—").split(",")[0]} → {(job.deliveryAddress || "—").split(",")[0]}
+            </span>
           </div>
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${statusBg}`}>{job.statusLabel}</span>
         </div>
       </header>
 
@@ -69,58 +106,66 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
         <Surface className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-base font-semibold">{job.client}</span>
+              <span className="text-base font-semibold">{job.customer?.name || "Nový klient"}</span>
               <span className="text-xs text-text-secondary">{dateFormatted}</span>
             </div>
-            <a
-              href={`tel:${job.phone.replace(/\s/g, "")}`}
-              className="flex items-center gap-1.5 rounded-xl bg-success/15 text-success px-3 py-2 text-sm font-medium hover:bg-success/25 active:bg-success/25 transition-colors"
-            >
-              <Phone className="size-4" />
-              Zavolat
-            </a>
+            {job.customer?.phone && (
+              <a
+                href={`tel:${job.customer.phone.replace(/\s/g, "")}`}
+                className="flex items-center gap-1.5 rounded-xl bg-success/15 text-success px-3 py-2 text-sm font-medium hover:bg-success/25 active:bg-success/25 transition-colors"
+              >
+                <Phone className="size-4" />
+                Zavolat
+              </a>
+            )}
           </div>
         </Surface>
 
         {/* Route */}
-        <Group>
+        {(job.pickupAddress || job.deliveryAddress) && (
+          <Group>
             {/* Pickup */}
             <div className="flex items-center justify-between gap-2 px-4 py-3 min-h-[44px]">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                 <span className="text-[10px] uppercase tracking-wider text-text-tertiary">Nakládka</span>
-                <span className="text-sm truncate">{job.pickup}</span>
-                <span className="text-xs text-text-tertiary">{floorInfo(job.floor.pickup, job.elevator.pickup)}</span>
+                <span className="text-sm truncate">{job.pickupAddress || "—"}</span>
+                <span className="text-xs text-text-tertiary">{floorInfo(job.pickupFloor, job.pickupElevator)}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => openNav(job.pickup)}
-                className="flex items-center gap-1 rounded-lg bg-surface-3 px-2.5 py-1.5 text-xs text-text-secondary shrink-0 min-h-[36px] hover:bg-surface-3/80 active:bg-surface-3/80 transition-colors"
-              >
-                <Navigation2 className="size-3.5" />
-                <span>Navigovat</span>
-              </button>
+              {job.pickupAddress && (
+                <button
+                  type="button"
+                  onClick={() => openNav(job.pickupAddress)}
+                  className="flex items-center gap-1 rounded-lg bg-surface-3 px-2.5 py-1.5 text-xs text-text-secondary shrink-0 min-h-[36px] hover:bg-surface-3/80 active:bg-surface-3/80 transition-colors"
+                >
+                  <Navigation2 className="size-3.5" />
+                  <span>Navigovat</span>
+                </button>
+              )}
             </div>
 
             {/* Delivery */}
             <div className="flex items-center justify-between gap-2 px-4 py-3 min-h-[44px]">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                 <span className="text-[10px] uppercase tracking-wider text-text-tertiary">Vykládka</span>
-                <span className="text-sm truncate">{job.delivery}</span>
-                <span className="text-xs text-text-tertiary">{floorInfo(job.floor.delivery, job.elevator.delivery)}</span>
+                <span className="text-sm truncate">{job.deliveryAddress || "—"}</span>
+                <span className="text-xs text-text-tertiary">{floorInfo(job.deliveryFloor, job.deliveryElevator)}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => openNav(job.delivery)}
-                className="flex items-center gap-1 rounded-lg bg-surface-3 px-2.5 py-1.5 text-xs text-text-secondary shrink-0 min-h-[36px] hover:bg-surface-3/80 active:bg-surface-3/80 transition-colors"
-              >
-                <Navigation2 className="size-3.5" />
-                <span>Navigovat</span>
-              </button>
+              {job.deliveryAddress && (
+                <button
+                  type="button"
+                  onClick={() => openNav(job.deliveryAddress)}
+                  className="flex items-center gap-1 rounded-lg bg-surface-3 px-2.5 py-1.5 text-xs text-text-secondary shrink-0 min-h-[36px] hover:bg-surface-3/80 active:bg-surface-3/80 transition-colors"
+                >
+                  <Navigation2 className="size-3.5" />
+                  <span>Navigovat</span>
+                </button>
+              )}
             </div>
 
             {/* Distance */}
-            <Row label="Vzdálenost" value={`${job.distance} km`} mono />
+            <Row label="Vzdálenost" value={`${Number(job.distance) || 0} km`} mono />
           </Group>
+        )}
 
         {/* Dispatcher note */}
         {job.dispatcherNote && (
@@ -142,9 +187,9 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
 
         {accessExpanded && (
           <Group>
-            <AccessRow label="Parkování" options={["Přímo", "Omezené", "Nutno řešit"]} />
+            <Row label="Parkování" value="—" />
             <Row label="Úzký průchod" value="Ne" />
-            <AccessRow label="Vzdálenost ke vchodu" options={["Krátká", "Střední", "Dlouhá"]} />
+            <Row label="Vzdálenost ke vchodu" value="—" />
           </Group>
         )}
 
@@ -159,20 +204,10 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
             className="w-full min-h-[80px] rounded-2xl bg-surface-1 px-4 py-3 text-sm transition-colors outline-none placeholder:text-text-tertiary focus-visible:ring-2 focus-visible:ring-ring/50 resize-y"
           />
         </div>
-
-        {/* Price if exists */}
-        {job.price !== "\u2014" && (
-          <Surface>
-            <Group>
-              <Row label="Celkem" value={job.price} mono />
-            </Group>
-          </Surface>
-        )}
-
       </main>
 
       {/* Sticky CTA */}
-      {job.actionable && (
+      {canStartSurvey && (
         <div className="sticky bottom-0 z-40 border-t border-border bg-surface-0/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
           <div className="px-4 py-3">
             <ActionButton onClick={() => router.push(`/jobs/${id}/survey`)}>
@@ -184,32 +219,6 @@ export default function BriefingPage({ params }: { params: Promise<{ id: string 
       )}
 
       {navAddress && <NavigationSheet address={navAddress} onClose={closeNav} />}
-    </div>
-  )
-}
-
-function AccessRow({ label, options }: { label: string; options: string[] }) {
-  const [selected, setSelected] = useState(0)
-  return (
-    <div className="flex items-center justify-between gap-2 px-4 py-2.5">
-      <span className="text-sm text-text-secondary shrink-0">{label}</span>
-      <div className="flex gap-1" role="group" aria-label={label}>
-        {options.map((opt, i) => (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => setSelected(i)}
-            aria-pressed={selected === i}
-            className={`px-2.5 py-2 text-xs rounded-lg min-h-[44px] transition-colors ${
-              selected === i
-                ? "bg-success text-success-foreground font-medium"
-                : "bg-surface-3 text-text-secondary hover:bg-surface-3/80"
-            }`}
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }

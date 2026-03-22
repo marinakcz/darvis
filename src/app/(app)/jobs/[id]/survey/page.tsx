@@ -1,11 +1,10 @@
 "use client"
 
-import { use, useState, useCallback, useSyncExternalStore } from "react"
+import { use, useState, useCallback, useRef, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
-import { X, Plus, ChevronDown, ChevronUp, Package } from "lucide-react"
+import { X, Plus, ChevronDown, ChevronUp, Package, Loader2 } from "lucide-react"
 import type { Job, SurveyRoom, RoomType, RoomMode, InventoryItem, MaterialOrder } from "@/lib/types"
 import { createEmptyJob, ROOM_LABELS, MATERIAL_LABELS, MATERIAL_UNITS } from "@/lib/types"
-import { getMockJobById } from "@/lib/mock-data"
 import { calculateJob, formatPrice, formatVolume } from "@/lib/calculator"
 import { getCatalogItem } from "@/lib/catalog"
 import { VEHICLES } from "@/lib/constants"
@@ -14,37 +13,11 @@ import { ActionButton, GhostButton } from "@/components/ds"
 import { RoomPicker } from "@/components/inventory/room-picker"
 import { RoomPanel } from "@/components/inventory/room-panel"
 
-function storageKey(jobId: string) { return `darvis-survey-${jobId}` }
-
-function loadJob(jobId: string): Job {
-  try {
-    const saved = localStorage.getItem(storageKey(jobId))
-    if (saved) return JSON.parse(saved)
-  } catch { /* ignore */ }
-  const mock = getMockJobById(jobId)
-  if (mock) {
-    const prefilled = createEmptyJob("quick")
-    prefilled.client = { name: mock.client, phone: mock.phone, email: "" }
-    prefilled.pickup = { address: mock.pickup, floor: mock.floor.pickup, elevator: mock.elevator.pickup }
-    prefilled.delivery = { address: mock.delivery, floor: mock.floor.delivery, elevator: mock.elevator.delivery }
-    prefilled.distance = mock.distance
-    prefilled.date = mock.date
-    prefilled.fromCRM = true
-    prefilled.dispatcherNote = mock.dispatcherNote
-    return prefilled
-  }
-  return createEmptyJob("quick")
-}
-
-function saveJobToStorage(jobId: string, job: Job) {
-  try { localStorage.setItem(storageKey(jobId), JSON.stringify(job)) } catch { /* ignore */ }
-}
+const PERCENT_STEPS = [5, 10, 15, 20, 25, 30, 40, 50]
 
 function useIsMounted() {
   return useSyncExternalStore(() => () => {}, () => true, () => false)
 }
-
-const PERCENT_STEPS = [5, 10, 15, 20, 25, 30, 40, 50]
 
 function autoSelectVehicle(totalVolume: number): string {
   if (totalVolume <= 15) return "small-15"
@@ -62,29 +35,145 @@ function getRoomVolume(room: SurveyRoom, vehicleCapacity: number): number {
   }, 0)
 }
 
+/** Convert DB job response to Job object for local state */
+function dbJobToLocal(data: Record<string, unknown>): Job {
+  const rooms = (data.rooms as Array<Record<string, unknown>>) || []
+  return {
+    mode: "quick",
+    jobType: (data.jobType as Job["jobType"]) || "apartment",
+    vehicleId: (data.vehicleId as Job["vehicleId"]) || "medium-24",
+    client: data.customer
+      ? {
+          name: (data.customer as Record<string, string>).name || "",
+          phone: (data.customer as Record<string, string>).phone || "",
+          email: (data.customer as Record<string, string>).email || "",
+        }
+      : { name: "", phone: "", email: "" },
+    pickup: {
+      address: (data.pickupAddress as string) || "",
+      floor: (data.pickupFloor as number) || 0,
+      elevator: (data.pickupElevator as boolean) || false,
+    },
+    delivery: {
+      address: (data.deliveryAddress as string) || "",
+      floor: (data.deliveryFloor as number) || 0,
+      elevator: (data.deliveryElevator as boolean) || false,
+    },
+    distance: Number(data.distance) || 0,
+    date: (data.date as string) || "",
+    rooms: [],
+    quickRooms: [],
+    surveyRooms: rooms.map((r): SurveyRoom => ({
+      id: r.id as string,
+      type: r.type as RoomType,
+      customName: r.customName as string | undefined,
+      mode: (r.mode as RoomMode) || "quick",
+      percent: (r.percent as number) || 0,
+      items: ((r.items as Array<Record<string, unknown>>) || []).map((i): InventoryItem => ({
+        id: i.id as string,
+        catalogId: i.catalogId as string,
+        quantity: (i.quantity as number) || 1,
+        services: {
+          disassembly: (i.disassembly as boolean) || false,
+          packing: (i.packing as boolean) || false,
+          assembly: (i.assembly as boolean) || false,
+        },
+        notes: i.notes as string | undefined,
+      })),
+    })),
+    materials: (data.materials as Job["materials"]) || { boxes: 0, crates: 0, stretchWrap: 0, bubbleWrap: 0, packingPaper: 0 },
+    access: (data.access as Job["access"]) || { parking: "easy", narrowPassage: false, narrowNote: "", entryDistance: "short" },
+    fromCRM: (data.fromCRM as boolean) || false,
+    technicianNotes: data.technicianNotes as string | undefined,
+    dispatcherNote: data.dispatcherNote as string | undefined,
+  }
+}
+
 export default function SurveyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params)
   const mounted = useIsMounted()
   const router = useRouter()
-  const [job, setJobState] = useState<Job>(() => loadJob(jobId))
+  const [job, setJobState] = useState<Job | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [loaded, setLoaded] = useState(false)
   const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null)
   const [showRoomPicker, setShowRoomPicker] = useState(false)
   const [materialsExpanded, setMaterialsExpanded] = useState(false)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const setJob = useCallback((updater: Job | ((prev: Job) => Job)) => {
-    setJobState((prev) => {
-      const next = typeof updater === "function" ? updater(prev) : updater
-      const calc = calculateJob(next)
-      const suggested = autoSelectVehicle(calc.totalVolume)
-      if (next.vehicleId !== suggested && next.surveyRooms.length > 0) {
-        next.vehicleId = suggested as Job["vehicleId"]
-      }
-      saveJobToStorage(jobId, next)
-      return next
-    })
-  }, [jobId])
+  // Load job from DB
+  if (mounted && !loaded) {
+    setLoaded(true)
+    fetch(`/api/jobs/${jobId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("not found")
+        return r.json()
+      })
+      .then((data) => {
+        setJobState(dbJobToLocal(data))
+        setLoading(false)
+      })
+      .catch(() => {
+        setJobState(createEmptyJob("quick"))
+        setLoading(false)
+      })
+  }
 
-  if (!mounted) return null
+  /** Debounced save to DB (800ms) */
+  const saveToDb = useCallback(
+    (updatedJob: Job) => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = setTimeout(() => {
+        setSaving(true)
+        fetch(`/api/jobs/${jobId}/survey`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jobType: updatedJob.jobType,
+            vehicleId: updatedJob.vehicleId,
+            pickup: updatedJob.pickup,
+            delivery: updatedJob.delivery,
+            distance: updatedJob.distance,
+            access: updatedJob.access,
+            date: updatedJob.date,
+            materials: updatedJob.materials,
+            technicianNotes: updatedJob.technicianNotes,
+            surveyRooms: updatedJob.surveyRooms,
+            status: "survey",
+          }),
+        })
+          .then(() => setSaving(false))
+          .catch(() => setSaving(false))
+      }, 800)
+    },
+    [jobId],
+  )
+
+  const setJob = useCallback(
+    (updater: Job | ((prev: Job) => Job)) => {
+      setJobState((prev) => {
+        if (!prev) return prev
+        const next = typeof updater === "function" ? updater(prev) : updater
+        const calc = calculateJob(next)
+        const suggested = autoSelectVehicle(calc.totalVolume)
+        if (next.vehicleId !== suggested && next.surveyRooms.length > 0) {
+          next.vehicleId = suggested as Job["vehicleId"]
+        }
+        saveToDb(next)
+        return next
+      })
+    },
+    [saveToDb],
+  )
+
+  if (!mounted || loading || !job) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-text-tertiary" />
+      </div>
+    )
+  }
 
   const calc = calculateJob(job)
   const vehicle = VEHICLES.find((v) => v.id === job.vehicleId) ?? VEHICLES[2]
@@ -145,9 +234,10 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
             <X className="size-5" />
           </button>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="text-sm font-semibold truncate">{job.client.name}</span>
+            <span className="text-sm font-semibold truncate">{job.client.name || "Nová zakázka"}</span>
             <span className="text-[11px] text-text-tertiary truncate">{pickupShort} → {deliveryShort}</span>
           </div>
+          {saving && <Loader2 className="size-4 animate-spin text-text-tertiary shrink-0" />}
         </div>
       </header>
 

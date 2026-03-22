@@ -2,35 +2,52 @@
 
 import { useState, useCallback, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronRight, ChevronDown, Search } from "lucide-react"
-import { SectionHeader } from "@/components/ds"
-import { MOCK_JOBS } from "@/lib/mock-data"
-import type { MockJob } from "@/lib/mock-data"
+import { ChevronRight, ChevronDown, Search, Plus, Loader2 } from "lucide-react"
+import { SectionHeader, ActionButton } from "@/components/ds"
 
 function useIsMounted() {
   return useSyncExternalStore(() => () => {}, () => true, () => false)
 }
 
+interface DbJob {
+  id: string
+  jobType: string
+  status: string
+  date: string | null
+  pickupAddress: string
+  deliveryAddress: string
+  pickupFloor: number
+  pickupElevator: boolean
+  deliveryFloor: number
+  deliveryElevator: boolean
+  distance: string
+  dispatcherNote: string | null
+  createdAt: string
+  customerName: string | null
+  customerPhone: string | null
+  customerEmail: string | null
+}
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; borderColor: string }> = {
+  draft: { label: "Koncept", color: "text-text-tertiary", borderColor: "border-l-zinc-400" },
   survey: { label: "Zaměření", color: "text-status-survey", borderColor: "border-l-status-survey" },
-  approval: { label: "Schválení", color: "text-status-approval", borderColor: "border-l-status-approval" },
+  offer: { label: "Nabídka", color: "text-status-approval", borderColor: "border-l-status-approval" },
+  approved: { label: "Schváleno", color: "text-status-execution", borderColor: "border-l-status-execution" },
   execution: { label: "Realizace", color: "text-status-execution", borderColor: "border-l-status-execution" },
   invoicing: { label: "Fakturace", color: "text-status-invoicing", borderColor: "border-l-status-invoicing" },
+  done: { label: "Hotovo", color: "text-text-tertiary", borderColor: "border-l-zinc-400" },
 }
 
-/** Requires technician action: unfinished surveys, pending approvals */
-function needsAction(job: MockJob): boolean {
-  return job.status === "survey" || job.status === "approval"
+function needsAction(job: DbJob): boolean {
+  return job.status === "draft" || job.status === "survey"
 }
 
-/** Scheduled work: execution jobs */
-function isScheduled(job: MockJob): boolean {
-  return job.status === "execution"
+function isActive(job: DbJob): boolean {
+  return job.status === "offer" || job.status === "approved" || job.status === "execution"
 }
 
-/** Done: invoicing */
-function isDone(job: MockJob): boolean {
-  return job.status === "invoicing"
+function isDone(job: DbJob): boolean {
+  return job.status === "invoicing" || job.status === "done"
 }
 
 export default function JobsListPage() {
@@ -38,33 +55,81 @@ export default function JobsListPage() {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [doneExpanded, setDoneExpanded] = useState(false)
+  const [jobs, setJobs] = useState<DbJob[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loaded, setLoaded] = useState(false)
+  const [creating, setCreating] = useState(false)
 
-  const openJob = useCallback((job: MockJob) => { router.push(`/jobs/${job.id}`) }, [router])
+  const openJob = useCallback((job: DbJob) => { router.push(`/jobs/${job.id}`) }, [router])
 
-  if (!mounted) return null
+  // Load from DB
+  if (mounted && !loaded) {
+    setLoaded(true)
+    fetch("/api/jobs")
+      .then((r) => r.json())
+      .then((data) => { setJobs(Array.isArray(data) ? data : []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }
+
+  async function createNewJob() {
+    setCreating(true)
+    try {
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobType: "apartment" }),
+      })
+      if (res.ok) {
+        const { id } = await res.json()
+        router.push(`/jobs/${id}/survey`)
+      }
+    } catch { /* ignore */ }
+    setCreating(false)
+  }
+
+  if (!mounted || loading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-text-tertiary" />
+      </div>
+    )
+  }
 
   // Filter by search
   const searchLower = search.toLowerCase()
   const allJobs = search
-    ? MOCK_JOBS.filter((j) =>
-        j.client.toLowerCase().includes(searchLower) ||
-        j.pickup.toLowerCase().includes(searchLower) ||
-        j.delivery.toLowerCase().includes(searchLower))
-    : MOCK_JOBS
+    ? jobs.filter((j) =>
+        (j.customerName || "").toLowerCase().includes(searchLower) ||
+        j.pickupAddress.toLowerCase().includes(searchLower) ||
+        j.deliveryAddress.toLowerCase().includes(searchLower))
+    : jobs
 
   const actionJobs = allJobs.filter(needsAction)
-  const scheduledJobs = allJobs.filter(isScheduled)
+  const activeJobs = allJobs.filter(isActive)
   const doneJobs = allJobs.filter(isDone)
 
-  const activeCount = actionJobs.length + scheduledJobs.length
+  const activeCount = actionJobs.length + activeJobs.length
 
   return (
     <div className="flex flex-1 flex-col ios-fade-in">
       <header className="bg-surface-0 px-4 pt-4 pb-2">
-        <h1 className="text-2xl font-bold tracking-tight">Zakázky</h1>
-        <p className="text-sm text-text-tertiary mt-0.5">
-          {activeCount} aktivní{doneJobs.length > 0 ? ` · ${doneJobs.length} dokončen${doneJobs.length === 1 ? "á" : "ých"}` : ""}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Zakázky</h1>
+            <p className="text-sm text-text-tertiary mt-0.5">
+              {activeCount} aktivní{doneJobs.length > 0 ? ` · ${doneJobs.length} dokončen${doneJobs.length === 1 ? "á" : "ých"}` : ""}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={createNewJob}
+            disabled={creating}
+            className="flex items-center gap-1.5 rounded-xl bg-success text-success-foreground px-3 py-2 text-sm font-medium hover:bg-success/90 active:bg-success/90 transition-colors min-h-[44px]"
+          >
+            {creating ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+            Nová
+          </button>
+        </div>
       </header>
 
       <main className="flex flex-1 flex-col gap-4 px-4 pb-4 overflow-y-auto">
@@ -81,6 +146,18 @@ export default function JobsListPage() {
           />
         </div>
 
+        {/* Empty state */}
+        {jobs.length === 0 && !search && (
+          <div className="flex flex-col items-center gap-4 py-12 text-center">
+            <p className="text-lg text-text-secondary">Zatím žádné zakázky</p>
+            <p className="text-sm text-text-tertiary">Vytvořte první zakázku a začněte zaměření.</p>
+            <ActionButton onClick={createNewJob} disabled={creating} className="max-w-[240px]">
+              {creating ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+              Vytvořit zakázku
+            </ActionButton>
+          </div>
+        )}
+
         {/* Vyžaduje akci */}
         {actionJobs.length > 0 && (
           <>
@@ -89,11 +166,11 @@ export default function JobsListPage() {
           </>
         )}
 
-        {/* Naplánováno */}
-        {scheduledJobs.length > 0 && (
+        {/* Aktivní */}
+        {activeJobs.length > 0 && (
           <>
-            <SectionHeader>Naplánováno · {scheduledJobs.length}</SectionHeader>
-            <JobGroup jobs={scheduledJobs} onOpen={openJob} />
+            <SectionHeader>Aktivní · {activeJobs.length}</SectionHeader>
+            <JobGroup jobs={activeJobs} onOpen={openJob} />
           </>
         )}
 
@@ -126,7 +203,7 @@ export default function JobsListPage() {
   )
 }
 
-function JobGroup({ jobs, onOpen }: { jobs: MockJob[]; onOpen: (job: MockJob) => void }) {
+function JobGroup({ jobs, onOpen }: { jobs: DbJob[]; onOpen: (job: DbJob) => void }) {
   return (
     <div className="rounded-2xl bg-surface-1 overflow-hidden divide-y divide-border">
       {jobs.map((job) => (
@@ -136,9 +213,11 @@ function JobGroup({ jobs, onOpen }: { jobs: MockJob[]; onOpen: (job: MockJob) =>
   )
 }
 
-function JobRow({ job, onClick }: { job: MockJob; onClick: () => void }) {
-  const config = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.survey
-  const dateFormatted = new Date(job.date).toLocaleDateString("cs-CZ", { weekday: "short", day: "numeric", month: "numeric" })
+function JobRow({ job, onClick }: { job: DbJob; onClick: () => void }) {
+  const config = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.draft
+  const dateFormatted = job.date
+    ? new Date(job.date).toLocaleDateString("cs-CZ", { weekday: "short", day: "numeric", month: "numeric" })
+    : "—"
 
   return (
     <button
@@ -148,30 +227,20 @@ function JobRow({ job, onClick }: { job: MockJob; onClick: () => void }) {
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold truncate">{job.client}</span>
+          <span className="text-sm font-semibold truncate">{job.customerName || "Nový klient"}</span>
           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${config.color}`}>
             {config.label}
           </span>
         </div>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs text-text-tertiary truncate">
-            {job.pickup.split(",")[0]} → {job.delivery.split(",")[0]}
-          </span>
-        </div>
+        {(job.pickupAddress || job.deliveryAddress) && (
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-text-tertiary truncate">
+              {(job.pickupAddress || "—").split(",")[0]} → {(job.deliveryAddress || "—").split(",")[0]}
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-[11px] font-mono text-text-tertiary">{dateFormatted}</span>
-          {job.price !== "\u2014" && (
-            <>
-              <span className="text-text-tertiary">·</span>
-              <span className="text-[11px] font-mono text-text-secondary">{job.price}</span>
-            </>
-          )}
-          {job.time && (
-            <>
-              <span className="text-text-tertiary">·</span>
-              <span className="text-[11px] font-mono text-text-secondary">{job.time}</span>
-            </>
-          )}
         </div>
       </div>
       <ChevronRight className="size-4 text-text-tertiary shrink-0" />
