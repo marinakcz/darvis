@@ -240,13 +240,6 @@ export default function AdminFeedbackPage() {
             <MessageSquare className="size-3.5" />
             Zpetna vazba
           </span>
-          <a
-            href="/admin/pipeline"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-colors min-h-[44px]"
-          >
-            <Clock className="size-3.5" />
-            Pipeline
-          </a>
         </div>
 
 
