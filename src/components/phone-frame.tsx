@@ -1,14 +1,12 @@
 "use client"
 
 import { useSyncExternalStore, useCallback } from "react"
-import { ClientTopBar } from "@/components/client-top-bar"
 
 const PHONE_W = 375
 const PHONE_H = 812
 const BEZEL = 8
 const TOTAL_W = PHONE_W + BEZEL
 const TOTAL_H = PHONE_H + BEZEL
-const TOP_BAR_H = 56
 
 function usePhoneScale() {
   const subscribe = useCallback((cb: () => void) => {
@@ -20,7 +18,7 @@ function usePhoneScale() {
     subscribe,
     () => {
       const pad = 80
-      const scaleH = (window.innerHeight - TOP_BAR_H - pad) / TOTAL_H
+      const scaleH = (window.innerHeight - pad) / TOTAL_H
       const scaleW = (window.innerWidth - pad) / TOTAL_W
       return Math.min(1, scaleH, scaleW)
     },
@@ -41,10 +39,8 @@ export function PhoneFrame({ children, tabBar }: { children: React.ReactNode; ta
         {tabBar}
       </div>
 
-      {/* Desktop: top bar + centered phone */}
+      {/* Desktop: centered phone */}
       <div className="hidden lg:flex flex-1 flex-col bg-zinc-950">
-        <ClientTopBar />
-
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
           <div style={{ width: TOTAL_W * scale, height: TOTAL_H * scale }}>
             <div className="relative origin-top-left" style={{ transform: `scale(${scale})` }}>
@@ -68,7 +64,6 @@ export function PhoneFrame({ children, tabBar }: { children: React.ReactNode; ta
           <button
             type="button"
             onClick={() => {
-              // Clear all job drafts
               const keys = Object.keys(localStorage)
               for (const key of keys) {
                 if (key.startsWith("darvis-job")) {
