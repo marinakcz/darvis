@@ -29,15 +29,9 @@ export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow embed mode (loaded in clientzone iframe)
-  // Validates Referer to prevent unauthorized embedding
+  // ?embed=1 bypasses PIN — cookie persists for sub-navigations
   const embedCookie = request.cookies.get("darvis-embed")
   if (request.nextUrl.searchParams.get("embed") === "1" || embedCookie?.value === "1") {
-    const referer = request.headers.get("referer") || ""
-    const allowedOrigins = ["clientzone.levouzadni.cz", "clientzone-chi.vercel.app", "localhost"]
-    const isAllowed = embedCookie?.value === "1" || allowedOrigins.some((o) => referer.includes(o))
-    if (!isAllowed) {
-      return NextResponse.redirect(new URL(ACCESS_PAGE, request.url))
-    }
     const response = NextResponse.next()
     if (!embedCookie) {
       response.cookies.set("darvis-embed", "1", { path: "/", maxAge: 60 * 60 * 24 }) // 24h
