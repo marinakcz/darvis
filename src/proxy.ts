@@ -29,9 +29,13 @@ export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow embed mode (loaded in clientzone iframe)
-  if (request.nextUrl.searchParams.get("embed") === "1") {
+  // First request has ?embed=1 → set cookie so subsequent navigations also pass
+  const embedCookie = request.cookies.get("darvis-embed")
+  if (request.nextUrl.searchParams.get("embed") === "1" || embedCookie?.value === "1") {
     const response = NextResponse.next()
-    response.headers.set("X-Frame-Options", "ALLOWALL")
+    if (!embedCookie) {
+      response.cookies.set("darvis-embed", "1", { path: "/", maxAge: 60 * 60 * 24 }) // 24h
+    }
     return response
   }
 
