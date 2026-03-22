@@ -28,6 +28,13 @@ function isValidAccessCookie(request: NextRequest): boolean {
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Allow embed mode (loaded in clientzone iframe)
+  if (request.nextUrl.searchParams.get("embed") === "1") {
+    const response = NextResponse.next()
+    response.headers.set("X-Frame-Options", "ALLOWALL")
+    return response
+  }
+
   // Allow access page and API routes without auth
   if (
     pathname === ACCESS_PAGE ||
