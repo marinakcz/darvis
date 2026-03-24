@@ -1,48 +1,54 @@
-// SwiftUI: TabView
+// iOS TabBarController with center action button
 "use client"
 
 import Link from "next/link"
-import { Home, ClipboardList, Bell, User } from "lucide-react"
-import { MOCK_NOTIFICATIONS } from "@/lib/mock-data"
+import { LayoutDashboard, CalendarDays, ClipboardList, User, Plus } from "lucide-react"
 
-export type TabId = "home" | "jobs" | "notifications" | "profile"
+export type TabId = "home" | "calendar" | "jobs" | "profile"
 
 interface MobileTabBarProps {
   activeTab: TabId
+  onCenterTap: () => void
 }
 
-const TABS: { id: TabId; label: string; icon: typeof Home; href: string }[] = [
-  { id: "home", label: "Přehled", icon: Home, href: "/dashboard" },
+const LEFT_TABS: { id: TabId; label: string; icon: typeof LayoutDashboard; href: string }[] = [
+  { id: "home", label: "Přehled", icon: LayoutDashboard, href: "/dashboard" },
+  { id: "calendar", label: "Kalendář", icon: CalendarDays, href: "/calendar" },
+]
+
+const RIGHT_TABS: { id: TabId; label: string; icon: typeof LayoutDashboard; href: string }[] = [
   { id: "jobs", label: "Zakázky", icon: ClipboardList, href: "/jobs" },
-  { id: "notifications", label: "Zprávy", icon: Bell, href: "/notifications" },
   { id: "profile", label: "Profil", icon: User, href: "/profile" },
 ]
 
-export function MobileTabBar({ activeTab }: MobileTabBarProps) {
-  const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.read).length
-
+export function MobileTabBar({ activeTab, onCenterTap }: MobileTabBarProps) {
   return (
-    <nav className="border-t border-border bg-surface-0/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] flex items-center justify-around px-2 shrink-0" style={{ minHeight: 49 }}>
-      {TABS.map((tab) => {
+    <nav className="border-t border-border bg-surface-0/80 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] flex items-center justify-around px-2 shrink-0 relative" style={{ minHeight: 49 }}>
+      {LEFT_TABS.map((tab) => {
         const Icon = tab.icon
         const isActive = activeTab === tab.id
-        const showBadge = tab.id === "notifications" && unreadCount > 0
         return (
-          <Link
-            key={tab.id}
-            href={tab.href}
-            className={`relative flex flex-col items-center gap-0.5 px-3 py-1 rounded transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-              isActive ? "text-text-primary" : "text-text-tertiary"
-            }`}
-          >
-            <div className="relative">
-              <Icon className="size-5" />
-              {showBadge && (
-                <span className="absolute -top-1 -right-1.5 flex items-center justify-center size-4 rounded-full bg-status-notification text-[9px] font-bold text-white">
-                  {unreadCount}
-                </span>
-              )}
-            </div>
+          <Link key={tab.id} href={tab.href}
+            className={`relative flex flex-col items-center gap-0.5 px-3 py-1 rounded transition-colors ${isActive ? "text-text-primary" : "text-text-tertiary"}`}>
+            <Icon className="size-5" />
+            <span className="text-[11px] leading-tight">{tab.label}</span>
+          </Link>
+        )
+      })}
+
+      {/* Center action button */}
+      <button type="button" onClick={onCenterTap} aria-label="Nová akce"
+        className="flex items-center justify-center size-12 -mt-5 rounded-2xl bg-success text-success-foreground shadow-lg shadow-success/25 hover:bg-success/90 active:scale-95 transition-all">
+        <Plus className="size-6" />
+      </button>
+
+      {RIGHT_TABS.map((tab) => {
+        const Icon = tab.icon
+        const isActive = activeTab === tab.id
+        return (
+          <Link key={tab.id} href={tab.href}
+            className={`relative flex flex-col items-center gap-0.5 px-3 py-1 rounded transition-colors ${isActive ? "text-text-primary" : "text-text-tertiary"}`}>
+            <Icon className="size-5" />
             <span className="text-[11px] leading-tight">{tab.label}</span>
           </Link>
         )

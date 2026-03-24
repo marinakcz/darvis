@@ -109,7 +109,11 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
   async function handleSendOffer() {
     setSending(true)
     try {
-      const res = await fetch(`/api/jobs/${jobId}/offer`, { method: "POST" })
+      const res = await fetch(`/api/jobs/${jobId}/offer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(priceOverride !== null && priceOverride !== calc.totalPrice ? { customPrice: priceOverride } : {}),
+      })
       if (res.ok) {
         const data = await res.json()
         const fullUrl = `${window.location.origin}/offer/${data.token}`
@@ -148,24 +152,42 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
         <div className="flex flex-col items-center gap-2 pt-4">
           <h2 className="text-lg text-text-secondary">Nabídka stěhování</h2>
           {editingPrice ? (
-            <div className="flex items-center gap-2">
-              <Input type="number" inputMode="numeric" value={priceOverride ?? calc.totalPrice}
-                onChange={(e) => setPriceOverride(Number(e.target.value) || 0)}
-                aria-label="Cena nabídky"
-                className="w-40 text-center font-mono text-2xl font-bold bg-surface-2 border-0" autoFocus />
-              <span className="text-lg text-text-secondary">Kč</span>
-              <button type="button" onClick={() => setEditingPrice(false)}
-                className="px-3 py-1.5 rounded-lg bg-surface-2 text-sm text-text-secondary hover:bg-surface-3 transition-colors">OK</button>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Input type="number" inputMode="numeric" value={priceOverride ?? calc.totalPrice}
+                  onChange={(e) => setPriceOverride(Number(e.target.value) || 0)}
+                  aria-label="Cena nabídky"
+                  className="w-44 text-center font-mono text-2xl font-bold bg-surface-2 border-0 h-14" autoFocus />
+                <span className="text-lg text-text-secondary">Kč</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => { setPriceOverride(null); setEditingPrice(false) }}
+                  className="px-4 py-2.5 rounded-xl bg-surface-2 text-sm text-text-secondary hover:bg-surface-3 transition-colors min-h-[44px]">
+                  Kalkulace
+                </button>
+                <button type="button" onClick={() => setEditingPrice(false)}
+                  className="px-4 py-2.5 rounded-xl bg-success text-success-foreground text-sm font-medium hover:bg-success/90 transition-colors min-h-[44px]">
+                  Potvrdit
+                </button>
+              </div>
+              <p className="text-xs text-text-tertiary">Kalkulace: {formatPrice(calc.totalPrice)}</p>
             </div>
           ) : (
             <button type="button" onClick={() => setEditingPrice(true)}
-              className="group flex items-center gap-2 font-mono text-4xl font-bold transition-colors hover:text-success">
+              className="group flex items-center gap-2 font-mono text-4xl font-bold transition-colors active:text-success">
               <span>{formatPrice(displayPrice)}</span>
-              <Pencil className="size-4 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Pencil className="size-4 text-text-tertiary group-active:text-success transition-opacity" />
             </button>
           )}
-          {priceOverride !== null && priceOverride !== calc.totalPrice && (
-            <p className="text-xs text-text-tertiary">Kalkulováno: {formatPrice(calc.totalPrice)}</p>
+          {!editingPrice && priceOverride !== null && priceOverride !== calc.totalPrice && (
+            <div className="flex flex-col items-center gap-0.5">
+              <p className="text-xs text-text-tertiary">
+                Kalkulace: {formatPrice(calc.totalPrice)}
+                <span className="ml-1.5 font-mono">
+                  ({priceOverride > calc.totalPrice ? "+" : ""}{formatPrice(priceOverride - calc.totalPrice)})
+                </span>
+              </p>
+            </div>
           )}
         </div>
 
@@ -253,13 +275,26 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
       {/* Sticky bottom */}
       <div className="sticky bottom-0 z-40 border-t border-border bg-surface-0/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
         <div className="flex flex-col gap-2 px-4 py-3">
-          <ActionButton onClick={handleSendOffer} disabled={sending || job.surveyRooms.length === 0}>
-            {sending ? <Loader2 className="size-5 animate-spin" /> : <Share2 className="size-5" />}
-            {offerUrl ? "Sdílet znovu" : "Odeslat nabídku klientovi"}
-          </ActionButton>
-          <GhostButton onClick={() => router.push(`/jobs/${jobId}/survey`)}>
-            ← Zpět na zaměření
-          </GhostButton>
+          {offerUrl ? (
+            <>
+              <ActionButton onClick={() => router.push("/dashboard")}>
+                Hotovo
+              </ActionButton>
+              <GhostButton onClick={handleSendOffer}>
+                <Share2 className="size-4" /> Sdílet znovu
+              </GhostButton>
+            </>
+          ) : (
+            <>
+              <ActionButton onClick={handleSendOffer} disabled={sending || job.surveyRooms.length === 0}>
+                {sending ? <Loader2 className="size-5 animate-spin" /> : <Share2 className="size-5" />}
+                Odeslat nabídku klientovi
+              </ActionButton>
+              <GhostButton onClick={() => router.push(`/jobs/${jobId}/survey`)}>
+                ← Zpět na zaměření
+              </GhostButton>
+            </>
+          )}
         </div>
       </div>
     </div>

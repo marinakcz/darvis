@@ -49,6 +49,7 @@ export const jobs = pgTable("jobs", {
 
   // Čas
   date: varchar("date", { length: 20 }),
+  time: varchar("time", { length: 5 }), // "09:00", "14:30", null
 
   // Materiály (user override)
   materials: jsonb("materials").$type<{

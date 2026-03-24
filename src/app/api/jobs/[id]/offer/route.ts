@@ -10,10 +10,19 @@ export const dynamic = "force-dynamic"
 
 /** POST /api/jobs/[id]/offer — generate an offer from survey data */
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: jobId } = await params
+
+  // Optional custom price from request body
+  let customPrice: number | null = null
+  try {
+    const body = await request.json()
+    if (body.customPrice && typeof body.customPrice === "number" && body.customPrice > 0) {
+      customPrice = body.customPrice
+    }
+  } catch { /* empty body is fine */ }
 
   // Load job
   const [jobRow] = await db
@@ -98,7 +107,7 @@ export async function POST(
       truckCount: calc.truckCount,
       workerCount: calc.workerCount,
       estimatedHours: String(calc.estimatedHours),
-      totalPrice: String(calc.totalPrice),
+      totalPrice: String(customPrice ?? calc.totalPrice),
       breakdown: calc.breakdown,
       materials: calc.materials,
       status: "sent",
@@ -112,16 +121,20 @@ export async function POST(
     .set({ status: "offer", updatedAt: new Date() })
     .where(eq(schema.jobs.id, jobId))
 
+  const finalPrice = customPrice ?? calc.totalPrice
+
   await logJobEvent(jobId, "offer_generated", {
     offerId: offer.id,
     token: offer.token,
-    totalPrice: calc.totalPrice,
+    calculatedPrice: calc.totalPrice,
+    finalPrice,
+    customPrice: customPrice !== null ? customPrice : undefined,
   })
 
   return Response.json({
     id: offer.id,
     token: offer.token,
     url: `/offer/${offer.token}`,
-    totalPrice: calc.totalPrice,
+    totalPrice: finalPrice,
   }, { status: 201 })
 }
