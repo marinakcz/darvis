@@ -101,6 +101,27 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
 
   const calc = calculateJob(job)
   const displayPrice = priceOverride ?? calc.totalPrice
+
+  // Client-facing breakdown logic:
+  // - Price lowered → original breakdown + "Sleva" row
+  // - Price raised → proportionally scale breakdown items (no trace)
+  // - No override → original breakdown
+  const priceDiff = displayPrice - calc.totalPrice
+  const isDiscount = priceOverride !== null && priceDiff < 0
+  const isMarkup = priceOverride !== null && priceDiff > 0
+
+  const clientBreakdown = (() => {
+    if (!isMarkup) return calc.breakdown
+    // Proportionally scale all items so they sum to displayPrice
+    const ratio = displayPrice / calc.totalPrice
+    return {
+      trucks: Math.round(calc.breakdown.trucks * ratio),
+      labor: Math.round(calc.breakdown.labor * ratio),
+      materials: Math.round(calc.breakdown.materials * ratio),
+      floorSurcharge: Math.round(calc.breakdown.floorSurcharge * ratio),
+      distanceSurcharge: Math.round(calc.breakdown.distanceSurcharge * ratio),
+    }
+  })()
   const selectedVehicle = VEHICLES.find((v) => v.id === job.vehicleId) ?? VEHICLES[2]
   const dateFormatted = job.date
     ? new Date(job.date).toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
@@ -211,14 +232,15 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
           </div>
         </Surface>
 
-        {/* Price breakdown */}
+        {/* Price breakdown — as client will see it */}
         <CollapsibleSection title="Rozpis ceny" expanded={breakdownExpanded} onToggle={() => setBreakdownExpanded((p) => !p)}>
           <Group>
-            <PriceRow label="Doprava (auta)" value={calc.breakdown.trucks} />
-            <PriceRow label="Práce" value={calc.breakdown.labor} />
-            <PriceRow label="Materiál + služby" value={calc.breakdown.materials} />
-            {calc.breakdown.floorSurcharge > 0 && <PriceRow label="Příplatek za patra" value={calc.breakdown.floorSurcharge} />}
-            {calc.breakdown.distanceSurcharge > 0 && <PriceRow label="Příplatek za vzdálenost" value={calc.breakdown.distanceSurcharge} />}
+            <PriceRow label="Doprava (auta)" value={clientBreakdown.trucks} />
+            <PriceRow label="Práce" value={clientBreakdown.labor} />
+            <PriceRow label="Materiál + služby" value={clientBreakdown.materials} />
+            {clientBreakdown.floorSurcharge > 0 && <PriceRow label="Příplatek za patra" value={clientBreakdown.floorSurcharge} />}
+            {clientBreakdown.distanceSurcharge > 0 && <PriceRow label="Příplatek za vzdálenost" value={clientBreakdown.distanceSurcharge} />}
+            {isDiscount && <PriceRow label="Sleva" value={priceDiff} />}
           </Group>
         </CollapsibleSection>
 

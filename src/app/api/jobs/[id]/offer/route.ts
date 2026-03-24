@@ -92,6 +92,24 @@ export async function POST(
   }
 
   const calc = calculateJob(jobForCalc)
+  const finalPrice = customPrice ?? calc.totalPrice
+  const priceDiff = finalPrice - calc.totalPrice
+
+  // Client-facing breakdown:
+  // - Discount → original breakdown + discount line (handled by frontend)
+  // - Markup → proportionally scale items (no trace of override)
+  const clientBreakdown = priceDiff > 0
+    ? {
+        trucks: Math.round(calc.breakdown.trucks * (finalPrice / calc.totalPrice)),
+        labor: Math.round(calc.breakdown.labor * (finalPrice / calc.totalPrice)),
+        materials: Math.round(calc.breakdown.materials * (finalPrice / calc.totalPrice)),
+        floorSurcharge: Math.round(calc.breakdown.floorSurcharge * (finalPrice / calc.totalPrice)),
+        distanceSurcharge: Math.round(calc.breakdown.distanceSurcharge * (finalPrice / calc.totalPrice)),
+      }
+    : priceDiff < 0
+    ? { ...calc.breakdown, discount: priceDiff }
+    : calc.breakdown
+
   const token = nanoid(12)
 
   // 14-day validity
@@ -107,8 +125,8 @@ export async function POST(
       truckCount: calc.truckCount,
       workerCount: calc.workerCount,
       estimatedHours: String(calc.estimatedHours),
-      totalPrice: String(customPrice ?? calc.totalPrice),
-      breakdown: calc.breakdown,
+      totalPrice: String(finalPrice),
+      breakdown: clientBreakdown,
       materials: calc.materials,
       status: "sent",
       validUntil,
@@ -120,8 +138,6 @@ export async function POST(
     .update(schema.jobs)
     .set({ status: "offer", updatedAt: new Date() })
     .where(eq(schema.jobs.id, jobId))
-
-  const finalPrice = customPrice ?? calc.totalPrice
 
   await logJobEvent(jobId, "offer_generated", {
     offerId: offer.id,

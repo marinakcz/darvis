@@ -16,7 +16,7 @@ interface OfferData {
   workerCount: number
   estimatedHours: number
   totalPrice: number
-  breakdown: { trucks: number; labor: number; materials: number; floorSurcharge: number; distanceSurcharge: number }
+  breakdown: { trucks: number; labor: number; materials: number; floorSurcharge: number; distanceSurcharge: number; discount?: number }
   status: string
   validUntil: string
   createdAt: string
@@ -154,6 +154,12 @@ export default function PublicOfferPage({ params }: { params: Promise<{ token: s
             <BreakdownRow label="Materiál + služby" value={offer.breakdown.materials} />
             {offer.breakdown.floorSurcharge > 0 && <BreakdownRow label="Příplatek patra" value={offer.breakdown.floorSurcharge} />}
             {offer.breakdown.distanceSurcharge > 0 && <BreakdownRow label="Příplatek vzdálenost" value={offer.breakdown.distanceSurcharge} />}
+            {offer.breakdown.discount && offer.breakdown.discount < 0 && (
+              <div className="flex items-center justify-between px-4 py-2.5 text-sm text-emerald-600">
+                <span>Sleva</span>
+                <span className="font-mono">{formatPrice(offer.breakdown.discount)}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between px-4 py-3 text-base font-bold">
               <span>Celkem</span>
               <span className="font-mono">{formatPrice(offer.totalPrice)}</span>
