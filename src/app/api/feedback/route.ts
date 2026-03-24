@@ -1,5 +1,4 @@
 import { put, list, del } from "@vercel/blob"
-import { isAdmin } from "@/lib/admin-auth"
 import type { NextRequest } from "next/server"
 import type { FeedbackEntry } from "@/lib/feedback"
 
@@ -58,22 +57,12 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const admin = isAdmin(request)
     const pageFilter = request.nextUrl.searchParams.get("page")
-
     const entries = await fetchAllFeedback()
-
     const filtered = pageFilter
       ? entries.filter((e) => e.page === pageFilter)
       : entries
-
-    if (admin) {
-      return Response.json(filtered)
-    }
-
-    // Strip admin-only fields for public
-    const publicEntries = filtered.map(({ note, resolution, status, ...rest }) => rest)
-    return Response.json(publicEntries)
+    return Response.json(filtered)
   } catch (error) {
     console.error("Feedback GET error:", error)
     return Response.json([], { status: 500 })
@@ -82,11 +71,6 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    // Admin only
-    if (!isAdmin(request)) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { id, status, note, resolution } = await request.json()
     if (!id) return Response.json({ error: "Missing id" }, { status: 400 })
 
@@ -119,10 +103,6 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    if (!isAdmin(request)) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { id } = await request.json()
     if (!id) return Response.json({ error: "Missing id" }, { status: 400 })
 

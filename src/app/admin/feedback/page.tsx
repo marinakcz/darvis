@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   Target, Wrench, HelpCircle, Plus, ThumbsUp,
   Download, ArrowLeft, Check, Eye, Clock,
-  Filter, Lock, LogOut, Loader2, Trash2,
+  Filter, Loader2, Trash2,
   MessageSquare,
 } from "lucide-react"
 import type { ComponentType } from "react"
@@ -31,11 +31,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; Icon: Compon
 type KindTab = "all" | "general"
 
 export default function AdminFeedbackPage() {
-  const [authenticated, setAuthenticated] = useState(false)
-  const [authChecked, setAuthChecked] = useState(false)
-  const [pinDigits, setPinDigits] = useState(["", "", "", ""])
-  const [pinError, setPinError] = useState(false)
-
   const [entries, setEntries] = useState<FeedbackEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [loaded, setLoaded] = useState(false)
@@ -44,120 +39,13 @@ export default function AdminFeedbackPage() {
   const [kindTab, setKindTab] = useState<KindTab>("all")
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  // Check auth on mount by trying to fetch (cookie will be sent automatically)
-  if (!authChecked) {
-    setAuthChecked(true)
-    fetch("/api/feedback")
-      .then((r) => r.json())
-      .then((data: FeedbackEntry[]) => {
-        // If we get entries with 'note' field, we're admin
-        if (data.length > 0 && "note" in data[0]) {
-          setAuthenticated(true)
-          setEntries(data)
-          setLoading(false)
-          setLoaded(true)
-        } else if (data.length === 0) {
-          // Could be admin with no entries or public — try to verify
-          // We'll show PIN screen
-          setLoading(false)
-        } else {
-          setLoading(false)
-        }
-      })
-      .catch(() => setLoading(false))
-  }
-
-  // Load data after PIN auth
-  if (authenticated && !loaded) {
+  // Load data on mount
+  if (!loaded) {
     setLoaded(true)
     fetch("/api/feedback")
       .then((r) => r.json())
-      .then((data: FeedbackEntry[]) => { setEntries(data); setLoading(false) })
+      .then((data: FeedbackEntry[]) => { setEntries(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => setLoading(false))
-  }
-
-  function handlePinInput(index: number, value: string) {
-    const digit = value.replace(/\D/g, "").slice(-1)
-    const next = [...pinDigits]
-    next[index] = digit
-    setPinDigits(next)
-    setPinError(false)
-
-    if (digit && index < 3) {
-      document.getElementById(`adm-${index + 1}`)?.focus()
-    }
-
-    const fullPin = next.join("")
-    if (fullPin.length === 4 && next.every((d) => d !== "")) {
-      fetch("/api/admin/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: fullPin }),
-      }).then((res) => {
-        if (res.ok) {
-          setAuthenticated(true)
-        } else {
-          setPinError(true)
-          setPinDigits(["", "", "", ""])
-          setTimeout(() => document.getElementById("adm-0")?.focus(), 50)
-        }
-      })
-    }
-  }
-
-  function handlePinKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === "Backspace" && !pinDigits[index] && index > 0) {
-      document.getElementById(`adm-${index - 1}`)?.focus()
-      const next = [...pinDigits]
-      next[index - 1] = ""
-      setPinDigits(next)
-    }
-  }
-
-  async function handleLogout() {
-    await fetch("/api/admin/logout", { method: "POST" })
-    setAuthenticated(false)
-    setLoaded(false)
-    setEntries([])
-    setAuthChecked(false)
-    setPinDigits(["", "", "", ""])
-  }
-
-  // PIN screen
-  if (!authenticated) {
-    return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-200 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-6 w-full max-w-sm px-6">
-          <Lock className="size-8 text-zinc-600" />
-          <h1 className="text-xl font-semibold text-zinc-200">Admin</h1>
-
-          <div className="flex gap-3">
-            {pinDigits.map((digit, i) => (
-              <input
-                key={i}
-                id={`adm-${i}`}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit ? "\u2022" : ""}
-                onChange={(e) => handlePinInput(i, e.target.value)}
-                onKeyDown={(e) => handlePinKeyDown(i, e)}
-                autoFocus={i === 0}
-                className={`w-12 h-14 text-center text-xl rounded-xl border-2 bg-zinc-900 outline-none transition-all ${
-                  pinError
-                    ? "border-red-500/50 bg-red-500/5"
-                    : digit
-                      ? "border-zinc-500 bg-zinc-800"
-                      : "border-zinc-700 focus:border-zinc-500"
-                }`}
-              />
-            ))}
-          </div>
-
-          {pinError && <p className="text-sm text-red-400">Nesprávný kód</p>}
-        </div>
-      </div>
-    )
   }
 
   const filtered = entries.filter((e) => {
@@ -226,9 +114,6 @@ export default function AdminFeedbackPage() {
             <a href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1">
               <ArrowLeft className="size-3.5" /> Demo
             </a>
-            <Button variant="outline" size="sm" className="gap-1.5 text-red-400 hover:text-red-300" onClick={handleLogout}>
-              <LogOut className="size-3.5" /> Odhlásit
-            </Button>
           </div>
         </div>
 
