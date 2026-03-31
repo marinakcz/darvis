@@ -31,6 +31,7 @@ interface JobDetail {
   jobType: string
   status: string
   date: string | null
+  time: string | null
   pickupAddress: string
   pickupFloor: number
   pickupElevator: boolean
@@ -102,6 +103,10 @@ export default function JobCockpitPage({ params }: { params: Promise<{ id: strin
   const [pendingStatus, setPendingStatus] = useState<JobStatus | null>(null)
   const [reasonNote, setReasonNote] = useState("")
   const [newNote, setNewNote] = useState("")
+  const [tagPickerOpen, setTagPickerOpen] = useState(false)
+  const [scheduleOpen, setScheduleOpen] = useState(false)
+  const [scheduleDate, setScheduleDate] = useState("")
+  const [scheduleTime, setScheduleTime] = useState("")
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { navAddress, openNav, closeNav } = useNavigationSheet()
 
@@ -207,6 +212,30 @@ export default function JobCockpitPage({ params }: { params: Promise<{ id: strin
     loadEvents()
   }, [id, newNote, loadEvents])
 
+  /** Toggle a tag */
+  const toggleTag = useCallback(async (tag: string) => {
+    const current = job?.tags ?? []
+    const next = current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag]
+    await fetch(`/api/jobs/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tags: next }),
+    })
+    setJob((prev) => prev ? { ...prev, tags: next } : prev)
+  }, [id, job?.tags])
+
+  /** Schedule date/time */
+  const saveSchedule = useCallback(async () => {
+    await fetch(`/api/jobs/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: scheduleDate || null, time: scheduleTime || null }),
+    })
+    setJob((prev) => prev ? { ...prev, date: scheduleDate || null, time: scheduleTime || null } : prev)
+    setScheduleOpen(false)
+    loadEvents()
+  }, [id, scheduleDate, scheduleTime, loadEvents])
+
   /** Log a call */
   const logCall = useCallback(async () => {
     await fetch(`/api/jobs/${id}/events`, {
@@ -309,12 +338,36 @@ export default function JobCockpitPage({ params }: { params: Promise<{ id: strin
               Zaměření
             </button>
           )}
+          <button type="button" onClick={() => { setScheduleDate(job.date || ""); setScheduleTime(""); setScheduleOpen(true) }}
+            className="flex items-center gap-1.5 rounded-xl bg-surface-2 px-3 py-2 text-xs text-text-secondary hover:bg-surface-3 transition-colors min-h-[36px]">
+            <Clock className="size-3.5" />
+            Naplánovat
+          </button>
         </div>
 
-        {/* Tags */}
-        {job.tags && job.tags.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {job.tags.map((tag) => <TagPill key={tag} tag={tag} size="sm" />)}
+        {/* Tags — editable */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {(job.tags ?? []).map((tag) => (
+            <button key={tag} type="button" onClick={() => toggleTag(tag)} className="group">
+              <TagPill tag={tag} size="sm" />
+            </button>
+          ))}
+          <button type="button" onClick={() => setTagPickerOpen((p) => !p)}
+            className="flex items-center gap-1 text-[11px] text-text-tertiary px-2 py-0.5 rounded-md border border-dashed border-border hover:bg-surface-2 transition-colors min-h-[24px]">
+            + tag
+          </button>
+        </div>
+        {tagPickerOpen && (
+          <div className="flex flex-wrap gap-1.5 rounded-xl bg-surface-1 p-3">
+            {["high", "medium", "low", "byt", "dům", "kancelář", "sklad", "web", "call", "referral", "volat", "napsat", "naplánovat"].map((tag) => {
+              const active = (job.tags ?? []).includes(tag)
+              return (
+                <button key={tag} type="button" onClick={() => toggleTag(tag)}
+                  className={`text-[11px] px-2 py-1 rounded-md border font-medium transition-colors min-h-[32px] ${active ? "bg-success/15 text-success border-success/30" : "bg-surface-2 text-text-secondary border-border hover:bg-surface-3"}`}>
+                  {active ? "✓ " : ""}{tag}
+                </button>
+              )
+            })}
           </div>
         )}
 
@@ -363,6 +416,9 @@ export default function JobCockpitPage({ params }: { params: Promise<{ id: strin
               )}
             </div>
             <Row label="Vzdálenost" value={`${Number(job.distance) || 0} km`} mono />
+            {Number(job.distance) > 0 && (
+              <Row label="Čas jízdy" value={`~${Math.round(Number(job.distance) * 0.02 * 1.3 * 60)} min`} mono />
+            )}
           </Group>
         )}
 
@@ -537,6 +593,37 @@ export default function JobCockpitPage({ params }: { params: Promise<{ id: strin
                 placeholder="Volitelná poznámka..."
                 className="w-full h-10 rounded-xl bg-surface-2 px-3 text-sm outline-none placeholder:text-text-tertiary"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule modal */}
+      {scheduleOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setScheduleOpen(false)}>
+          <div className="w-full max-w-lg bg-surface-1 rounded-t-2xl pb-[env(safe-area-inset-bottom)] ios-sheet-up" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+              <h3 className="text-base font-semibold">Naplánovat</h3>
+              <button type="button" onClick={() => setScheduleOpen(false)}
+                className="flex items-center justify-center size-8 rounded-lg hover:bg-surface-2 transition-colors">
+                <X className="size-4 text-text-tertiary" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-3 px-4 py-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-text-tertiary">Datum</label>
+                <input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)}
+                  className="h-11 rounded-xl bg-surface-2 px-3 text-sm outline-none" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-text-tertiary">Čas</label>
+                <input type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)}
+                  className="h-11 rounded-xl bg-surface-2 px-3 text-sm outline-none" />
+              </div>
+              <button type="button" onClick={saveSchedule}
+                className="h-12 rounded-xl bg-success text-success-foreground text-sm font-medium hover:bg-success/90 transition-colors">
+                Uložit
+              </button>
             </div>
           </div>
         </div>

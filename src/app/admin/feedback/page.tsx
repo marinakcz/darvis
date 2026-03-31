@@ -36,7 +36,7 @@ export default function AdminFeedbackPage() {
   const [loaded, setLoaded] = useState(false)
   const [filterType, setFilterType] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<string | null>(null)
-  const [kindTab, setKindTab] = useState<KindTab>("all")
+  const [kindTab] = useState<KindTab>("all")
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   // Load data on mount

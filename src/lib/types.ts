@@ -156,6 +156,7 @@ export interface Calculation {
   truckCount: number
   workerCount: number
   estimatedHours: number
+  driveTimeMinutes: number
   materials: MaterialOrder
   breakdown: {
     trucks: number

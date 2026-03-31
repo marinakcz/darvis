@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, Navigation2, X, Phone } from "lucide-react"
-import Image from "next/image"
+import { MapPin, Navigation2, X } from "lucide-react"
 
 interface NavigationSheetProps {
   address: string

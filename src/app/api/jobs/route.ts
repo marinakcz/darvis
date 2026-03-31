@@ -24,6 +24,7 @@ export async function GET() {
       dispatcherNote: schema.jobs.dispatcherNote,
       tags: schema.jobs.tags,
       createdAt: schema.jobs.createdAt,
+      updatedAt: schema.jobs.updatedAt,
       customerName: schema.customers.name,
       customerPhone: schema.customers.phone,
       customerEmail: schema.customers.email,

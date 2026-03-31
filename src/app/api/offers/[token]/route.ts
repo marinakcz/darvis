@@ -4,6 +4,50 @@ import { eq } from "drizzle-orm"
 
 export const dynamic = "force-dynamic"
 
+/** PATCH /api/offers/[token] — client accepts/rejects offer */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ token: string }> },
+) {
+  const { token } = await params
+  const body = await request.json()
+  const { response } = body as { response: "accepted" | "rejected" }
+
+  if (response !== "accepted" && response !== "rejected") {
+    return Response.json({ error: "Invalid response" }, { status: 400 })
+  }
+
+  const [offer] = await db
+    .select()
+    .from(schema.offers)
+    .where(eq(schema.offers.token, token))
+    .limit(1)
+
+  if (!offer) {
+    return Response.json({ error: "Not found" }, { status: 404 })
+  }
+
+  // Update offer status
+  const offerStatus = response === "accepted" ? "accepted" : "rejected"
+  await db
+    .update(schema.offers)
+    .set({ status: offerStatus })
+    .where(eq(schema.offers.id, offer.id))
+
+  // Update job status if accepted
+  if (response === "accepted") {
+    await db
+      .update(schema.jobs)
+      .set({ status: "approved", updatedAt: new Date() })
+      .where(eq(schema.jobs.id, offer.jobId))
+    await logJobEvent(offer.jobId, "status_changed", { from: "offer", to: "approved", source: "client" })
+  }
+
+  await logJobEvent(offer.jobId, response === "accepted" ? "offer_accepted" : "offer_rejected", { token })
+
+  return Response.json({ ok: true })
+}
+
 /** GET /api/offers/[token] — public offer data (no auth needed) */
 export async function GET(
   _request: Request,
@@ -65,6 +109,7 @@ export async function GET(
     totalPrice: Number(offer.totalPrice),
     breakdown: offer.breakdown,
     materials: offer.materials,
+    clientNote: offer.clientNote,
     status: offer.status,
     validUntil: offer.validUntil,
     createdAt: offer.createdAt,

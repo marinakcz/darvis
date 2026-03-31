@@ -41,6 +41,15 @@ Wizard, katalog, kalkulace, nabídka, feedback, admin, mobilní UI. Vše na mock
 
 Referenční dokument: `~/ai-studio/notes/AI-studio/01-projects/darvis/ideace/Manuální kalkulace.md`
 
+## Context Stack
+
+Před generováním kódu v tomto projektu přečti:
+1. `ai-context/registry.json` — existující komponenty (importy, props, usage)
+2. `ai-context/tech/rules.md` — pravidla specifická pro tento projekt
+3. `ai-context/tech/patterns.md` — opakované vzory
+
+Pokud `ai-context/` složka ještě neexistuje, řiď se pravidly z tohoto CLAUDE.md.
+
 ## Pravidla
 
 - Mobile-first vždy — každá komponenta musí fungovat na 375px+

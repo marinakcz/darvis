@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { X, Search, ClipboardList, UserPlus, StickyNote, Loader2, ChevronRight, Phone } from "lucide-react"
+import { Search, ClipboardList, UserPlus, StickyNote, Loader2, ChevronRight, Phone } from "lucide-react"
 
 interface SearchResult {
   type: "job" | "customer"
@@ -180,7 +180,7 @@ export function CommandCenter({ open, onClose, onQuickJob }: CommandCenterProps)
           {/* No results */}
           {query.length >= 2 && !searching && results.length === 0 && (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm text-text-secondary">Žádné výsledky pro „{query}"</p>
+              <p className="text-sm text-text-secondary">Žádné výsledky pro &bdquo;{query}&ldquo;</p>
             </div>
           )}
         </div>

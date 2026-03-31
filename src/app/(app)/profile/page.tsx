@@ -1,6 +1,6 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { ChevronRight, LogOut } from "lucide-react"
 import { Surface, Group, Row, SectionHeader } from "@/components/ds"
 
@@ -10,6 +10,18 @@ function useIsMounted() {
 
 export default function ProfilePage() {
   const mounted = useIsMounted()
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document === "undefined") return true
+    return document.documentElement.classList.contains("dark")
+  })
+
+  function toggleTheme() {
+    const next = !isDark
+    setIsDark(next)
+    document.documentElement.classList.toggle("dark", next)
+    localStorage.setItem("darvis-theme", next ? "dark" : "light")
+  }
+
   if (!mounted) return null
 
   return (
@@ -34,12 +46,12 @@ export default function ProfilePage() {
         <SectionHeader>Nastavení</SectionHeader>
         <Surface>
           <Group>
-            <div className="flex items-center justify-between px-4 py-3 min-h-[44px]">
+            <button type="button" onClick={toggleTheme} className="flex items-center justify-between px-4 py-3 min-h-[44px] w-full text-left">
               <span className="text-sm">Tmavý režim</span>
-              <div className="relative h-[31px] w-[51px] rounded-full bg-success transition-colors">
-                <div className="absolute right-[2px] top-[2px] h-[27px] w-[27px] rounded-full bg-surface-0 shadow transition-transform" />
+              <div className={`relative h-[31px] w-[51px] rounded-full transition-colors ${isDark ? "bg-success" : "bg-zinc-300"}`}>
+                <div className={`absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform ${isDark ? "right-[2px]" : "left-[2px]"}`} />
               </div>
-            </div>
+            </button>
             <button type="button" className="flex items-center justify-between px-4 py-3 min-h-[44px] w-full text-left hover:bg-surface-3 active:bg-surface-3 transition-colors">
               <span className="text-sm">Notifikace</span>
               <div className="flex items-center gap-1.5">

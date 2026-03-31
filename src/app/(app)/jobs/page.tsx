@@ -4,7 +4,8 @@ import { useState, useCallback, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronRight, ChevronDown, Search, Plus, Loader2 } from "lucide-react"
 import { SectionHeader, ActionButton } from "@/components/ds"
-import { getStatusConfig, needsAction, isActive, isDone } from "@/lib/job-status"
+import { getStatusConfig, needsAction, isActive, isDone, isTerminal, STATUS_CONFIG, type JobStatus } from "@/lib/job-status"
+import { TagPill } from "@/components/tag-pill"
 
 function useIsMounted() {
   return useSyncExternalStore(() => () => {}, () => true, () => false)
@@ -23,6 +24,7 @@ interface DbJob {
   deliveryElevator: boolean
   distance: string
   dispatcherNote: string | null
+  tags: string[] | null
   createdAt: string
   customerName: string | null
   customerPhone: string | null
@@ -33,6 +35,7 @@ export default function JobsListPage() {
   const mounted = useIsMounted()
   const router = useRouter()
   const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState<JobStatus | null>(null)
   const [doneExpanded, setDoneExpanded] = useState(false)
   const [jobs, setJobs] = useState<DbJob[]>([])
   const [loading, setLoading] = useState(true)
@@ -74,14 +77,18 @@ export default function JobsListPage() {
     )
   }
 
-  // Filter by search
+  // Filter by search + status
   const searchLower = search.toLowerCase()
-  const allJobs = search
+  let allJobs = search
     ? jobs.filter((j) =>
         (j.customerName || "").toLowerCase().includes(searchLower) ||
         j.pickupAddress.toLowerCase().includes(searchLower) ||
         j.deliveryAddress.toLowerCase().includes(searchLower))
     : jobs
+
+  if (statusFilter) {
+    allJobs = allJobs.filter((j) => j.status === statusFilter)
+  }
 
   const actionJobs = allJobs.filter((j) => needsAction(j.status))
   const activeJobs = allJobs.filter((j) => isActive(j.status))
@@ -123,6 +130,26 @@ export default function JobsListPage() {
             aria-label="Hledat zakázky"
             className="w-full h-11 rounded-xl bg-surface-1 pl-10 pr-4 text-sm outline-none placeholder:text-text-tertiary focus-visible:ring-2 focus-visible:ring-ring/50 transition-colors"
           />
+        </div>
+
+        {/* Status filter chips */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+          <button type="button" onClick={() => setStatusFilter(null)}
+            className={`shrink-0 text-[11px] font-medium px-2.5 py-1.5 rounded-lg transition-colors min-h-[32px] ${!statusFilter ? "bg-success text-success-foreground" : "bg-surface-1 text-text-secondary hover:bg-surface-2"}`}>
+            Vše
+          </button>
+          {(["draft", "survey", "offer", "approved", "execution", "invoicing", "done", "lost"] as JobStatus[]).map((s) => {
+            const cfg = STATUS_CONFIG[s]
+            const count = jobs.filter((j) => j.status === s).length
+            if (count === 0) return null
+            return (
+              <button key={s} type="button" onClick={() => setStatusFilter((prev) => prev === s ? null : s)}
+                className={`shrink-0 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg transition-colors min-h-[32px] ${statusFilter === s ? "bg-success text-success-foreground" : "bg-surface-1 text-text-secondary hover:bg-surface-2"}`}>
+                <span className={`size-1.5 rounded-full ${cfg.dotColor}`} />
+                {cfg.label} <span className="text-text-tertiary">{count}</span>
+              </button>
+            )
+          })}
         </div>
 
         {/* Empty state */}
@@ -205,11 +232,12 @@ function JobRow({ job, onClick }: { job: DbJob; onClick: () => void }) {
       className={`flex items-center gap-3 px-4 py-3.5 min-h-[44px] w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[3px] ${config.borderColor}`}
     >
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-semibold truncate">{job.customerName || "Nový klient"}</span>
           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${config.color}`}>
             {config.label}
           </span>
+          {job.tags?.map((tag) => <TagPill key={tag} tag={tag} />)}
         </div>
         {(job.pickupAddress || job.deliveryAddress) && (
           <div className="flex items-center gap-2 mt-1">

@@ -72,6 +72,8 @@ export async function PATCH(
   if ("dispatcherNote" in body) allowed.dispatcherNote = body.dispatcherNote
   if ("access" in body) allowed.access = body.access
   if ("tags" in body) allowed.tags = body.tags
+  if ("date" in body) allowed.date = body.date
+  if ("time" in body) allowed.time = body.time
   if ("lossReason" in body) allowed.lossReason = body.lossReason
   if ("lossNote" in body) allowed.lossNote = body.lossNote
   if ("winReason" in body) allowed.winReason = body.winReason

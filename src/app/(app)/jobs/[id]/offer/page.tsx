@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronDown, ChevronUp, Truck, Pencil, Share2, Loader2 } from "lucide-react"
 import type { Job, SurveyRoom } from "@/lib/types"
 import { ROOM_LABELS } from "@/lib/types"
-import { calculateJob, formatPrice, formatVolume } from "@/lib/calculator"
+import { calculateJob, formatPrice, formatVolume, formatDriveTime } from "@/lib/calculator"
 import { VEHICLES } from "@/lib/constants"
 import { RoomIcon } from "@/components/icons"
 import { Surface, Group, Row, Stat, ActionButton, GhostButton, SectionHeader } from "@/components/ds"
@@ -133,7 +133,10 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
       const res = await fetch(`/api/jobs/${jobId}/offer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(priceOverride !== null && priceOverride !== calc.totalPrice ? { customPrice: priceOverride } : {}),
+        body: JSON.stringify({
+          ...(priceOverride !== null && priceOverride !== calc.totalPrice ? { customPrice: priceOverride } : {}),
+          ...(quoteNote.trim() ? { clientNote: quoteNote.trim() } : {}),
+        }),
       })
       if (res.ok) {
         const data = await res.json()
@@ -221,6 +224,8 @@ export default function OfferPage({ params }: { params: Promise<{ id: string }> 
           <Stat label="Lidí" value={`${calc.workerCount}`} />
           <Separator orientation="vertical" className="h-8" />
           <Stat label="Hodin" value={`${calc.estimatedHours}h`} />
+          <Separator orientation="vertical" className="h-8" />
+          <Stat label="Jízda" value={formatDriveTime(calc.driveTimeMinutes)} />
         </Surface>
 
         {/* Vehicle */}

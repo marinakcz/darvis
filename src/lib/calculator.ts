@@ -127,6 +127,7 @@ export function calculateJob(job: Job, vehicleOverride?: VehicleData): Calculati
     truckCount,
     workerCount,
     estimatedHours,
+    driveTimeMinutes: Math.round(distanceHours * 60),
     materials,
     breakdown: {
       trucks: trucksCost,
@@ -142,6 +143,14 @@ export function calculateJob(job: Job, vehicleOverride?: VehicleData): Calculati
 /** Formátování ceny v Kč */
 export function formatPrice(amount: number): string {
   return new Intl.NumberFormat("cs-CZ").format(amount) + " Kč"
+}
+
+/** Formátování času jízdy */
+export function formatDriveTime(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m > 0 ? `${h} h ${m} min` : `${h} h`
 }
 
 /** Formátování objemu */

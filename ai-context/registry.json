@@ -1,0 +1,240 @@
+{
+  "version": "1.0",
+  "project": "darvis",
+  "components": [
+    {
+      "name": "Surface",
+      "source": "@/components/ds",
+      "import": "import { Surface } from \"@/components/ds\"",
+      "exports": ["Surface"],
+      "description": "L1 card — main content container (bg-surface-1, rounded-2xl)",
+      "props": {
+        "children": "React.ReactNode",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Group",
+      "source": "@/components/ds",
+      "import": "import { Group } from \"@/components/ds\"",
+      "exports": ["Group"],
+      "description": "L2 nested group — rows inside a Surface (bg-surface-2, divide-y, rounded-xl)",
+      "props": {
+        "children": "React.ReactNode",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Row",
+      "source": "@/components/ds",
+      "import": "import { Row } from \"@/components/ds\"",
+      "exports": ["Row"],
+      "description": "Key-value row inside a Group (min-h-[44px])",
+      "props": {
+        "label": "string",
+        "value": "string",
+        "mono": "boolean (optional, default false)"
+      }
+    },
+    {
+      "name": "TapRow",
+      "source": "@/components/ds",
+      "import": "import { TapRow } from \"@/components/ds\"",
+      "exports": ["TapRow"],
+      "description": "Tappable row with chevron — navigates somewhere (min-h-[44px])",
+      "props": {
+        "children": "React.ReactNode",
+        "onClick": "() => void"
+      }
+    },
+    {
+      "name": "SectionHeader",
+      "source": "@/components/ds",
+      "import": "import { SectionHeader } from \"@/components/ds\"",
+      "exports": ["SectionHeader"],
+      "description": "Tiny uppercase section label (text-xs, tracking-wider, text-text-secondary)",
+      "props": {
+        "children": "React.ReactNode"
+      }
+    },
+    {
+      "name": "ActionButton",
+      "source": "@/components/ds",
+      "import": "import { ActionButton } from \"@/components/ds\"",
+      "exports": ["ActionButton"],
+      "description": "Primary green CTA button (bg-success, h-14, rounded-2xl, full width)",
+      "props": {
+        "children": "React.ReactNode",
+        "onClick": "() => void (optional)",
+        "disabled": "boolean (optional)",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "GhostButton",
+      "source": "@/components/ds",
+      "import": "import { GhostButton } from \"@/components/ds\"",
+      "exports": ["GhostButton"],
+      "description": "Ghost/outlined secondary button (border-border, h-12, rounded-2xl, full width)",
+      "props": {
+        "children": "React.ReactNode",
+        "onClick": "() => void (optional)",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Alert",
+      "source": "@/components/ds",
+      "import": "import { Alert } from \"@/components/ds\"",
+      "exports": ["Alert"],
+      "description": "Inline alert banner with variant colors (rounded-2xl, border)",
+      "props": {
+        "variant": "\"warning\" | \"error\" | \"success\" | \"info\" (default \"warning\")",
+        "title": "string (optional)",
+        "children": "React.ReactNode"
+      }
+    },
+    {
+      "name": "Stat",
+      "source": "@/components/ds",
+      "import": "import { Stat } from \"@/components/ds\"",
+      "exports": ["Stat"],
+      "description": "Compact stat box — monospace value with tiny label (e.g. volume, trucks, workers)",
+      "props": {
+        "label": "string",
+        "value": "string"
+      }
+    },
+    {
+      "name": "Accordion",
+      "source": "@/components/ui/accordion",
+      "import": "import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from \"@/components/ui/accordion\"",
+      "exports": ["Accordion", "AccordionItem", "AccordionTrigger", "AccordionContent"],
+      "description": "Expandable accordion (base-ui primitive). \"use client\".",
+      "props": {
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Badge",
+      "source": "@/components/ui/badge",
+      "import": "import { Badge } from \"@/components/ui/badge\"",
+      "exports": ["Badge", "badgeVariants"],
+      "description": "Inline badge with CVA variants",
+      "props": {
+        "variant": "\"default\" | \"secondary\" | \"destructive\" | \"outline\" | \"ghost\" | \"link\"",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Button",
+      "source": "@/components/ui/button",
+      "import": "import { Button } from \"@/components/ui/button\"",
+      "exports": ["Button", "buttonVariants"],
+      "description": "General button with CVA variants and sizes. \"use client\".",
+      "props": {
+        "variant": "\"default\" | \"outline\" | \"secondary\" | \"ghost\" | \"destructive\" | \"link\"",
+        "size": "\"default\" | \"xs\" | \"sm\" | \"lg\" | \"icon\" | \"icon-xs\" | \"icon-sm\" | \"icon-lg\"",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Card",
+      "source": "@/components/ui/card",
+      "import": "import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter } from \"@/components/ui/card\"",
+      "exports": ["Card", "CardHeader", "CardTitle", "CardDescription", "CardAction", "CardContent", "CardFooter"],
+      "description": "shadcn Card with ring border, size=\"default\"|\"sm\"",
+      "props": {
+        "size": "\"default\" | \"sm\" (optional)",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Input",
+      "source": "@/components/ui/input",
+      "import": "import { Input } from \"@/components/ui/input\"",
+      "exports": ["Input"],
+      "description": "Text input (base-ui primitive, h-11, rounded-lg)",
+      "props": {
+        "type": "string (optional)",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Label",
+      "source": "@/components/ui/label",
+      "import": "import { Label } from \"@/components/ui/label\"",
+      "exports": ["Label"],
+      "description": "Form label. \"use client\".",
+      "props": {
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "ScrollArea",
+      "source": "@/components/ui/scroll-area",
+      "import": "import { ScrollArea, ScrollBar } from \"@/components/ui/scroll-area\"",
+      "exports": ["ScrollArea", "ScrollBar"],
+      "description": "Scrollable area with custom scrollbar (base-ui). \"use client\".",
+      "props": {
+        "className": "string (optional)",
+        "orientation": "\"vertical\" | \"horizontal\" (ScrollBar only)"
+      }
+    },
+    {
+      "name": "Select",
+      "source": "@/components/ui/select",
+      "import": "import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator } from \"@/components/ui/select\"",
+      "exports": ["Select", "SelectTrigger", "SelectValue", "SelectContent", "SelectItem", "SelectGroup", "SelectLabel", "SelectSeparator", "SelectScrollUpButton", "SelectScrollDownButton"],
+      "description": "Dropdown select (base-ui). \"use client\".",
+      "props": {
+        "size": "\"sm\" | \"default\" (SelectTrigger only)"
+      }
+    },
+    {
+      "name": "Separator",
+      "source": "@/components/ui/separator",
+      "import": "import { Separator } from \"@/components/ui/separator\"",
+      "exports": ["Separator"],
+      "description": "Visual separator line (base-ui). \"use client\".",
+      "props": {
+        "orientation": "\"horizontal\" | \"vertical\"",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Sheet",
+      "source": "@/components/ui/sheet",
+      "import": "import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from \"@/components/ui/sheet\"",
+      "exports": ["Sheet", "SheetTrigger", "SheetClose", "SheetContent", "SheetHeader", "SheetFooter", "SheetTitle", "SheetDescription"],
+      "description": "Slide-out panel/bottom sheet (base-ui Dialog). \"use client\".",
+      "props": {
+        "side": "\"top\" | \"right\" | \"bottom\" | \"left\" (SheetContent, default \"right\")",
+        "showCloseButton": "boolean (SheetContent, default true)"
+      }
+    },
+    {
+      "name": "Switch",
+      "source": "@/components/ui/switch",
+      "import": "import { Switch } from \"@/components/ui/switch\"",
+      "exports": ["Switch"],
+      "description": "Toggle switch (base-ui). \"use client\".",
+      "props": {
+        "size": "\"sm\" | \"default\"",
+        "className": "string (optional)"
+      }
+    },
+    {
+      "name": "Tooltip",
+      "source": "@/components/ui/tooltip",
+      "import": "import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from \"@/components/ui/tooltip\"",
+      "exports": ["TooltipProvider", "Tooltip", "TooltipTrigger", "TooltipContent"],
+      "description": "Tooltip popup (base-ui). \"use client\".",
+      "props": {
+        "delay": "number (TooltipProvider, default 0)",
+        "side": "\"top\" | \"right\" | \"bottom\" | \"left\" (TooltipContent)",
+        "sideOffset": "number (TooltipContent, default 4)"
+      }
+    }
+  ]
+}

@@ -164,7 +164,7 @@ export function QuickJobSheet({ open, onClose, onCreated }: QuickJobSheetProps) 
                 <button type="button" onClick={startNewClient}
                   className="flex items-center gap-2 w-full px-4 py-3 text-left text-sm text-success hover:bg-surface-2 active:bg-surface-2 transition-colors min-h-[44px]">
                   <UserPlus className="size-4" />
-                  Nový klient „{query}"
+                  Nový klient &bdquo;{query}&ldquo;
                 </button>
               </div>
             )}
@@ -174,7 +174,7 @@ export function QuickJobSheet({ open, onClose, onCreated }: QuickJobSheetProps) 
               <button type="button" onClick={startNewClient}
                 className="flex items-center gap-2 rounded-xl bg-surface-1 px-4 py-3 text-sm text-success hover:bg-surface-2 transition-colors min-h-[44px]">
                 <UserPlus className="size-4" />
-                Vytvořit klienta „{query}"
+                Vytvořit klienta &bdquo;{query}&ldquo;
               </button>
             )}
 

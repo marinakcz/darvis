@@ -3,7 +3,7 @@
 import { use, useState, useSyncExternalStore } from "react"
 import { Loader2 } from "lucide-react"
 import { ROOM_LABELS } from "@/lib/types"
-import { formatPrice, formatVolume } from "@/lib/calculator"
+import { formatPrice, formatVolume, formatDriveTime } from "@/lib/calculator"
 
 function useIsMounted() {
   return useSyncExternalStore(() => () => {}, () => true, () => false)
@@ -17,6 +17,7 @@ interface OfferData {
   estimatedHours: number
   totalPrice: number
   breakdown: { trucks: number; labor: number; materials: number; floorSurcharge: number; distanceSurcharge: number; discount?: number }
+  clientNote: string | null
   status: string
   validUntil: string
   createdAt: string
@@ -35,6 +36,8 @@ export default function PublicOfferPage({ params }: { params: Promise<{ token: s
   const [offer, setOffer] = useState<OfferData | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [responding, setResponding] = useState(false)
+  const [response, setResponse] = useState<"accepted" | "rejected" | null>(null)
 
   if (mounted && !loaded) {
     setLoaded(true)
@@ -104,6 +107,9 @@ export default function PublicOfferPage({ params }: { params: Promise<{ token: s
           <StatBox label="Aut" value={`${offer.truckCount}x`} />
           <StatBox label="Lidí" value={`${offer.workerCount}`} />
           <StatBox label="Hodin" value={`${offer.estimatedHours}h`} />
+          {job && Number(job.distance) > 0 && (
+            <StatBox label="Jízda" value={formatDriveTime(Math.round(Number(job.distance) * 0.02 * 1.3 * 60))} />
+          )}
         </div>
 
         {/* Route */}
@@ -167,6 +173,18 @@ export default function PublicOfferPage({ params }: { params: Promise<{ token: s
           </div>
         </section>
 
+        {/* Client note */}
+        {offer.clientNote && (
+          <section className="rounded-xl border border-zinc-200 overflow-hidden">
+            <div className="px-4 py-2.5 bg-zinc-50 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              Poznámka
+            </div>
+            <div className="px-4 py-3 text-sm text-zinc-600 leading-relaxed whitespace-pre-wrap">
+              {offer.clientNote}
+            </div>
+          </section>
+        )}
+
         {/* Disclaimer */}
         <p className="text-center text-xs text-zinc-400 leading-relaxed">
           Cena je orientační a může se lišit dle skutečného rozsahu práce.
@@ -176,9 +194,43 @@ export default function PublicOfferPage({ params }: { params: Promise<{ token: s
 
         {/* CTA */}
         <div className="flex flex-col gap-3 pt-2">
+          {response === "accepted" ? (
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-6 text-center">
+              <p className="text-lg font-bold text-emerald-700">Děkujeme za zájem!</p>
+              <p className="text-sm text-emerald-600 mt-1">Budeme vás kontaktovat k domluvení termínu.</p>
+            </div>
+          ) : response === "rejected" ? (
+            <div className="rounded-xl bg-zinc-50 border border-zinc-200 px-4 py-6 text-center">
+              <p className="text-base font-semibold text-zinc-700">Rozumíme, děkujeme za zvážení.</p>
+              <p className="text-sm text-zinc-500 mt-1">Pokud si to rozmyslíte, neváhejte nás kontaktovat.</p>
+            </div>
+          ) : (
+            <>
+              <button type="button" onClick={async () => {
+                  setResponding(true)
+                  try {
+                    await fetch(`/api/offers/${token}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ response: "accepted" }) })
+                    setResponse("accepted")
+                  } catch {} finally { setResponding(false) }
+                }} disabled={responding}
+                className="flex items-center justify-center h-14 rounded-xl bg-emerald-600 text-white text-base font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                {responding ? <Loader2 className="size-5 animate-spin" /> : "Mám zájem — potvrdit"}
+              </button>
+              <button type="button" onClick={async () => {
+                  setResponding(true)
+                  try {
+                    await fetch(`/api/offers/${token}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ response: "rejected" }) })
+                    setResponse("rejected")
+                  } catch {} finally { setResponding(false) }
+                }} disabled={responding}
+                className="flex items-center justify-center h-12 rounded-xl border border-zinc-200 text-zinc-600 text-sm hover:bg-zinc-50 transition-colors disabled:opacity-50">
+                Nemám zájem
+              </button>
+            </>
+          )}
           <a
             href="tel:+420800123456"
-            className="flex items-center justify-center h-14 rounded-xl bg-zinc-900 text-white text-base font-medium hover:bg-zinc-800 transition-colors"
+            className="flex items-center justify-center h-12 rounded-xl bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
           >
             Mám dotaz — zavolat
           </a>
