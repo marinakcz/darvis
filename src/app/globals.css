@@ -59,10 +59,13 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-tertiary: var(--text-tertiary);
+  --color-status-new: var(--status-new);
   --color-status-survey: var(--status-survey);
-  --color-status-execution: var(--status-execution);
   --color-status-approval: var(--status-approval);
+  --color-status-scheduled: var(--status-scheduled);
+  --color-status-execution: var(--status-execution);
   --color-status-invoicing: var(--status-invoicing);
+  --color-status-lost: var(--status-lost);
   --color-status-notification: var(--status-notification);
 }
 
@@ -100,11 +103,11 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Darvis custom tokens — light fallbacks */
-  --surface-0: oklch(0.97 0 0);
-  --surface-1: oklch(1 0 0);
-  --surface-2: oklch(0.96 0 0);
-  --surface-3: oklch(0.93 0 0);
+  /* Darvis custom tokens — light mode (off-white, not pure white) */
+  --surface-0: oklch(0.98 0 0);     /* #FAFAFA — page canvas */
+  --surface-1: oklch(1 0 0);        /* white — cards */
+  --surface-2: oklch(0.96 0 0);     /* nested groups */
+  --surface-3: oklch(0.93 0 0);     /* hover/active */
   --success: oklch(0.45 0.10 160);
   --success-foreground: oklch(1 0 0);
   --warning: oklch(0.72 0.08 75);
@@ -112,10 +115,13 @@
   --text-primary: oklch(0.145 0 0);
   --text-secondary: oklch(0.45 0 0);
   --text-tertiary: oklch(0.65 0 0);
-  --status-survey: oklch(0.50 0.08 240);
-  --status-execution: oklch(0.48 0.08 160);
-  --status-approval: oklch(0.55 0.07 75);
-  --status-invoicing: oklch(0.48 0.06 300);
+  --status-new: oklch(0.48 0.10 160);         /* green — nový lead */
+  --status-survey: oklch(0.50 0.08 240);       /* steel blue — zaměření */
+  --status-approval: oklch(0.55 0.07 75);      /* warm sand — nabídka */
+  --status-scheduled: oklch(0.52 0.10 55);     /* orange — naplánováno */
+  --status-execution: oklch(0.48 0.08 300);    /* purple — probíhá */
+  --status-invoicing: oklch(0.48 0.06 280);    /* soft lavender — fakturace */
+  --status-lost: oklch(0.50 0.12 25);          /* red — ztraceno */
   --status-notification: oklch(0.55 0.10 25);
 }
 
@@ -133,8 +139,8 @@
    * Amber for warnings, red for destructive.
    */
 
-  /* L0 — page canvas */
-  --background: oklch(0.13 0 0);
+  /* L0 — page canvas (#0F0F10 — ne pure black) */
+  --background: oklch(0.12 0 0);
   --foreground: oklch(0.96 0 0);
 
   /* L1 — cards, sections */
@@ -201,10 +207,13 @@
   --text-tertiary: oklch(0.61 0 0);    /* 4.7:1+ on all surfaces — AA */
 
   /* ── Status colors — low chroma, readable on dark surfaces ── */
-  --status-survey: oklch(0.70 0.08 240);    /* steel blue — readable */
-  --status-execution: oklch(0.68 0.08 160); /* sage green — readable */
-  --status-approval: oklch(0.72 0.07 75);   /* warm sand — readable */
-  --status-invoicing: oklch(0.65 0.06 300); /* soft lavender — readable */
+  --status-new: oklch(0.68 0.10 160);         /* green — nový lead */
+  --status-survey: oklch(0.70 0.08 240);      /* steel blue — zaměření */
+  --status-approval: oklch(0.72 0.07 75);     /* warm sand — nabídka */
+  --status-scheduled: oklch(0.70 0.10 55);    /* orange — naplánováno */
+  --status-execution: oklch(0.65 0.08 300);   /* purple — probíhá */
+  --status-invoicing: oklch(0.62 0.06 280);   /* soft lavender — fakturace */
+  --status-lost: oklch(0.65 0.12 25);         /* red — ztraceno */
   --status-notification: oklch(0.65 0.10 25); /* muted coral — readable */
 }
 

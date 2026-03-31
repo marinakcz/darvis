@@ -1,5 +1,7 @@
 import { db, schema } from "@/lib/db"
 import { eq } from "drizzle-orm"
+import { logJobEvent } from "@/lib/db/events"
+import { canTransition, type JobStatus } from "@/lib/job-status"
 
 export const dynamic = "force-dynamic"
 
@@ -54,4 +56,64 @@ export async function GET(
     customer,
     rooms: roomsWithItems,
   })
+}
+
+/** PATCH /api/jobs/[id] — update job fields (notes, access, etc.) */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params
+  const body = await request.json()
+
+  // Whitelist updatable fields
+  const allowed: Record<string, unknown> = {}
+  if ("technicianNotes" in body) allowed.technicianNotes = body.technicianNotes
+  if ("dispatcherNote" in body) allowed.dispatcherNote = body.dispatcherNote
+  if ("access" in body) allowed.access = body.access
+  if ("tags" in body) allowed.tags = body.tags
+  if ("lossReason" in body) allowed.lossReason = body.lossReason
+  if ("lossNote" in body) allowed.lossNote = body.lossNote
+  if ("winReason" in body) allowed.winReason = body.winReason
+  if ("winNote" in body) allowed.winNote = body.winNote
+
+  // Status change with transition validation
+  if ("status" in body) {
+    const [current] = await db
+      .select({ status: schema.jobs.status })
+      .from(schema.jobs)
+      .where(eq(schema.jobs.id, id))
+      .limit(1)
+
+    if (!current) {
+      return Response.json({ error: "Not found" }, { status: 404 })
+    }
+
+    const from = current.status as JobStatus
+    const to = body.status as JobStatus
+
+    if (!canTransition(from, to)) {
+      return Response.json(
+        { error: `Cannot transition from "${from}" to "${to}"` },
+        { status: 400 },
+      )
+    }
+
+    allowed.status = to
+    await logJobEvent(id, "status_changed", { from, to })
+  }
+
+  if (Object.keys(allowed).length === 0) {
+    return Response.json({ error: "No valid fields" }, { status: 400 })
+  }
+
+  allowed.updatedAt = new Date()
+
+  await db.update(schema.jobs).set(allowed).where(eq(schema.jobs.id, id))
+
+  if (!("status" in body)) {
+    await logJobEvent(id, "job_updated", { fields: Object.keys(allowed) })
+  }
+
+  return Response.json({ ok: true })
 }

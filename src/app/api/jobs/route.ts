@@ -22,6 +22,7 @@ export async function GET() {
       deliveryElevator: schema.jobs.deliveryElevator,
       distance: schema.jobs.distance,
       dispatcherNote: schema.jobs.dispatcherNote,
+      tags: schema.jobs.tags,
       createdAt: schema.jobs.createdAt,
       customerName: schema.customers.name,
       customerPhone: schema.customers.phone,

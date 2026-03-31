@@ -4,6 +4,7 @@ import { useState, useCallback, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronRight, ChevronDown, Search, Plus, Loader2 } from "lucide-react"
 import { SectionHeader, ActionButton } from "@/components/ds"
+import { getStatusConfig, needsAction, isActive, isDone } from "@/lib/job-status"
 
 function useIsMounted() {
   return useSyncExternalStore(() => () => {}, () => true, () => false)
@@ -26,28 +27,6 @@ interface DbJob {
   customerName: string | null
   customerPhone: string | null
   customerEmail: string | null
-}
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; borderColor: string }> = {
-  draft: { label: "Koncept", color: "text-text-tertiary", borderColor: "border-l-zinc-400" },
-  survey: { label: "Zaměření", color: "text-status-survey", borderColor: "border-l-status-survey" },
-  offer: { label: "Nabídka", color: "text-status-approval", borderColor: "border-l-status-approval" },
-  approved: { label: "Schváleno", color: "text-status-execution", borderColor: "border-l-status-execution" },
-  execution: { label: "Realizace", color: "text-status-execution", borderColor: "border-l-status-execution" },
-  invoicing: { label: "Fakturace", color: "text-status-invoicing", borderColor: "border-l-status-invoicing" },
-  done: { label: "Hotovo", color: "text-text-tertiary", borderColor: "border-l-zinc-400" },
-}
-
-function needsAction(job: DbJob): boolean {
-  return job.status === "draft" || job.status === "survey"
-}
-
-function isActive(job: DbJob): boolean {
-  return job.status === "offer" || job.status === "approved" || job.status === "execution"
-}
-
-function isDone(job: DbJob): boolean {
-  return job.status === "invoicing" || job.status === "done"
 }
 
 export default function JobsListPage() {
@@ -104,9 +83,9 @@ export default function JobsListPage() {
         j.deliveryAddress.toLowerCase().includes(searchLower))
     : jobs
 
-  const actionJobs = allJobs.filter(needsAction)
-  const activeJobs = allJobs.filter(isActive)
-  const doneJobs = allJobs.filter(isDone)
+  const actionJobs = allJobs.filter((j) => needsAction(j.status))
+  const activeJobs = allJobs.filter((j) => isActive(j.status))
+  const doneJobs = allJobs.filter((j) => isDone(j.status))
 
   const activeCount = actionJobs.length + activeJobs.length
 
@@ -214,7 +193,7 @@ function JobGroup({ jobs, onOpen }: { jobs: DbJob[]; onOpen: (job: DbJob) => voi
 }
 
 function JobRow({ job, onClick }: { job: DbJob; onClick: () => void }) {
-  const config = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.draft
+  const config = getStatusConfig(job.status)
   const dateFormatted = job.date
     ? new Date(job.date).toLocaleDateString("cs-CZ", { weekday: "short", day: "numeric", month: "numeric" })
     : "—"

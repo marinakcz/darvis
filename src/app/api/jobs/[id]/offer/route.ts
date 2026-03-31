@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm"
 import { nanoid } from "nanoid"
 import type { NextRequest } from "next/server"
 import type { Job, SurveyRoom, InventoryItem } from "@/lib/types"
-import { calculateJob, } from "@/lib/calculator"
+import { calculateJob, type VehicleData } from "@/lib/calculator"
 
 export const dynamic = "force-dynamic"
 
@@ -15,12 +15,16 @@ export async function POST(
 ) {
   const { id: jobId } = await params
 
-  // Optional custom price from request body
+  // Optional custom price and client note from request body
   let customPrice: number | null = null
+  let clientNote: string | null = null
   try {
     const body = await request.json()
     if (body.customPrice && typeof body.customPrice === "number" && body.customPrice > 0) {
       customPrice = body.customPrice
+    }
+    if (body.clientNote && typeof body.clientNote === "string" && body.clientNote.trim()) {
+      clientNote = body.clientNote.trim()
     }
   } catch { /* empty body is fine */ }
 
@@ -91,7 +95,23 @@ export async function POST(
     access: (jobRow.access as Job["access"]) || { parking: "easy", narrowPassage: false, narrowNote: "", entryDistance: "short" },
   }
 
-  const calc = calculateJob(jobForCalc)
+  // Load vehicle from DB for timeMultiplier
+  let vehicleOverride: VehicleData | undefined
+  const [dbVehicle] = await db
+    .select()
+    .from(schema.vehicles)
+    .where(eq(schema.vehicles.id, jobRow.vehicleId))
+    .limit(1)
+  if (dbVehicle) {
+    vehicleOverride = {
+      id: dbVehicle.id,
+      capacity: dbVehicle.capacity,
+      hourlyRate: dbVehicle.hourlyRate,
+      timeMultiplier: Number(dbVehicle.timeMultiplier),
+    }
+  }
+
+  const calc = calculateJob(jobForCalc, vehicleOverride)
   const finalPrice = customPrice ?? calc.totalPrice
   const priceDiff = finalPrice - calc.totalPrice
 
@@ -128,6 +148,7 @@ export async function POST(
       totalPrice: String(finalPrice),
       breakdown: clientBreakdown,
       materials: calc.materials,
+      clientNote,
       status: "sent",
       validUntil,
     })

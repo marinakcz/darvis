@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1774616384331,
+      "tag": "0000_fair_madripoor",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774981247603,
+      "tag": "0001_certain_rumiko_fujikawa",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774981491484,
+      "tag": "0002_breezy_master_chief",
+      "breakpoints": true
+    }
+  ]
+}

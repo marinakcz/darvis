@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useCallback, useSyncExternalStore } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronRight, Loader2, Plus, Phone, Navigation2 } from "lucide-react"
+import { ChevronRight, Loader2, Plus } from "lucide-react"
+import { getStatusConfig } from "@/lib/job-status"
 
 function useIsMounted() {
   return useSyncExternalStore(() => () => {}, () => true, () => false)
@@ -26,16 +27,6 @@ interface DbJob {
   customerName: string | null
   customerPhone: string | null
   customerEmail: string | null
-}
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; borderColor: string }> = {
-  draft: { label: "Koncept", color: "text-text-tertiary", borderColor: "border-l-zinc-400" },
-  survey: { label: "Zaměření", color: "text-status-survey", borderColor: "border-l-status-survey" },
-  offer: { label: "Nabídka", color: "text-status-approval", borderColor: "border-l-status-approval" },
-  approved: { label: "Schváleno", color: "text-status-execution", borderColor: "border-l-status-execution" },
-  execution: { label: "Realizace", color: "text-status-execution", borderColor: "border-l-status-execution" },
-  invoicing: { label: "Fakturace", color: "text-status-invoicing", borderColor: "border-l-status-invoicing" },
-  done: { label: "Hotovo", color: "text-text-tertiary", borderColor: "border-l-zinc-400" },
 }
 
 function getTodayStr() {
@@ -106,9 +97,9 @@ export default function CalendarPage() {
   function getDateDots(date: string): string[] {
     const dateJobs = jobs.filter((j) => j.date === date)
     const dots: string[] = []
-    if (dateJobs.some((j) => j.status === "draft" || j.status === "survey")) dots.push("bg-status-survey")
-    if (dateJobs.some((j) => j.status === "execution")) dots.push("bg-status-execution")
-    if (dateJobs.some((j) => j.status === "offer" || j.status === "approved")) dots.push("bg-status-approval")
+    if (dateJobs.some((j) => j.status === "draft" || j.status === "survey")) dots.push(getStatusConfig("survey").dotColor)
+    if (dateJobs.some((j) => j.status === "execution")) dots.push(getStatusConfig("execution").dotColor)
+    if (dateJobs.some((j) => j.status === "offer" || j.status === "approved")) dots.push(getStatusConfig("offer").dotColor)
     return dots
   }
 
@@ -187,7 +178,7 @@ export default function CalendarPage() {
           </div>
         ) : (
           dayJobs.map((job, i) => {
-            const config = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.draft
+            const config = getStatusConfig(job.status)
             const prevJob = i > 0 ? dayJobs[i - 1] : null
 
             // Time gap indicator

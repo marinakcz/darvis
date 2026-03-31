@@ -13,7 +13,7 @@ import { ActionButton, GhostButton } from "@/components/ds"
 import { RoomPicker } from "@/components/inventory/room-picker"
 import { RoomPanel } from "@/components/inventory/room-panel"
 
-const PERCENT_STEPS = [5, 10, 15, 20, 25, 30, 40, 50]
+const PERCENT_PRESETS = [10, 20, 30, 50]
 
 function useIsMounted() {
   return useSyncExternalStore(() => () => {}, () => true, () => false)
@@ -201,8 +201,14 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
     updateRoom(roomId, (r) => ({ ...r, mode: r.mode === "quick" ? "detailed" : "quick" }))
   }
 
-  function updatePercent(roomId: string, percent: number) {
-    updateRoom(roomId, (r) => ({ ...r, percent }))
+  /** Přidá preset % k aktuálnímu součtu */
+  function addPreset(roomId: string, preset: number) {
+    updateRoom(roomId, (r) => ({ ...r, percent: r.percent + preset }))
+  }
+
+  /** Nastaví % přímo (ruční override) */
+  function setPercent(roomId: string, percent: number) {
+    updateRoom(roomId, (r) => ({ ...r, percent: Math.max(0, percent) }))
   }
 
   function toggleRoom(roomId: string) {
@@ -293,15 +299,37 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
                     </div>
 
                     {room.mode === "quick" && (
-                      <div className="flex flex-wrap gap-1.5" role="group">
-                        {PERCENT_STEPS.map((p) => (
-                          <button key={p} type="button" onClick={() => updatePercent(room.id, p)} aria-pressed={room.percent === p}
-                            className={`h-11 rounded-lg px-3 py-2 text-sm font-mono font-medium transition-colors ${
-                              room.percent === p ? "bg-success text-success-foreground" : "bg-surface-2 text-text-secondary hover:bg-surface-3"
-                            }`}>
-                            {p}%
-                          </button>
-                        ))}
+                      <div className="flex flex-col gap-3">
+                        {/* Aktuální hodnota — editovatelný chip */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-text-tertiary">Zaplnění:</span>
+                          <div className="flex items-center gap-1 bg-surface-2 rounded-lg px-2 py-1">
+                            <input
+                              type="number"
+                              value={room.percent}
+                              onChange={(e) => setPercent(room.id, parseInt(e.target.value) || 0)}
+                              className="w-14 bg-transparent text-center text-lg font-mono font-bold outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              min={0}
+                              max={999}
+                            />
+                            <span className="text-sm font-mono text-text-secondary">%</span>
+                          </div>
+                          {room.percent > 0 && (
+                            <button type="button" onClick={() => setPercent(room.id, 0)}
+                              className="flex items-center justify-center size-8 rounded-lg text-text-tertiary hover:bg-surface-3 hover:text-destructive transition-colors">
+                              <X className="size-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        {/* Preset buttony — klikáním se přidávají */}
+                        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Přidat procenta">
+                          {PERCENT_PRESETS.map((p) => (
+                            <button key={p} type="button" onClick={() => addPreset(room.id, p)}
+                              className="h-11 rounded-lg px-4 py-2 text-sm font-mono font-medium bg-surface-2 text-text-secondary hover:bg-success hover:text-success-foreground active:bg-success active:text-success-foreground transition-colors">
+                              +{p}%
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
 

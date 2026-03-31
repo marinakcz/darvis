@@ -3,6 +3,9 @@
 import { useState, useCallback, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronRight, Loader2, AlertCircle, FileText, Plus, Phone, Navigation2 } from "lucide-react"
+import { getStatusConfig, needsAction, needsAttention, allowedTransitions, type JobStatus } from "@/lib/job-status"
+import { SwipeableCard } from "@/components/swipeable-card"
+import { TagPill } from "@/components/tag-pill"
 
 function useIsMounted() {
   return useSyncExternalStore(() => () => {}, () => true, () => false)
@@ -22,20 +25,11 @@ interface DbJob {
   deliveryElevator: boolean
   distance: string
   dispatcherNote: string | null
+  tags: string[] | null
   createdAt: string
   customerName: string | null
   customerPhone: string | null
   customerEmail: string | null
-}
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; borderColor: string }> = {
-  draft: { label: "Koncept", color: "text-text-tertiary", borderColor: "border-l-zinc-400" },
-  survey: { label: "Zaměření", color: "text-status-survey", borderColor: "border-l-status-survey" },
-  offer: { label: "Nabídka", color: "text-status-approval", borderColor: "border-l-status-approval" },
-  approved: { label: "Schváleno", color: "text-status-execution", borderColor: "border-l-status-execution" },
-  execution: { label: "Realizace", color: "text-status-execution", borderColor: "border-l-status-execution" },
-  invoicing: { label: "Fakturace", color: "text-status-invoicing", borderColor: "border-l-status-invoicing" },
-  done: { label: "Hotovo", color: "text-text-tertiary", borderColor: "border-l-zinc-400" },
 }
 
 const ATTENTION_ICON: Record<string, typeof AlertCircle> = {
@@ -46,14 +40,6 @@ const ATTENTION_ICON: Record<string, typeof AlertCircle> = {
 function getTodayStr() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-}
-
-function needsAction(job: DbJob): boolean {
-  return job.status === "draft" || job.status === "survey"
-}
-
-function needsAttention(job: DbJob): boolean {
-  return job.status === "offer" || job.status === "invoicing"
 }
 
 export default function DashboardPage() {
@@ -73,6 +59,63 @@ export default function DashboardPage() {
       .then((data) => { setJobs(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => setLoading(false))
   }
+
+  /** Handle swipe actions on job cards */
+  const handleSwipeAction = useCallback(async (job: DbJob, actionId: string) => {
+    switch (actionId) {
+      case "called": {
+        await fetch(`/api/jobs/${job.id}/events`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "call_logged" }),
+        })
+        break
+      }
+      case "advance": {
+        const transitions = allowedTransitions(job.status as JobStatus)
+        const next = transitions.find((t) => t !== "lost")
+        if (next) {
+          await fetch(`/api/jobs/${job.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: next }),
+          })
+          setJobs((prev) => prev.map((j) => j.id === job.id ? { ...j, status: next } : j))
+        }
+        break
+      }
+      case "done": {
+        await fetch(`/api/jobs/${job.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "done" }),
+        })
+        setJobs((prev) => prev.map((j) => j.id === job.id ? { ...j, status: "done" } : j))
+        break
+      }
+      case "reject": {
+        await fetch(`/api/jobs/${job.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "lost" }),
+        })
+        setJobs((prev) => prev.map((j) => j.id === job.id ? { ...j, status: "lost" } : j))
+        break
+      }
+      case "note": {
+        router.push(`/jobs/${job.id}`)
+        break
+      }
+      case "remind": {
+        await fetch(`/api/jobs/${job.id}/events`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "reminder_set" }),
+        })
+        break
+      }
+    }
+  }, [router])
 
   if (!mounted || loading) {
     return (
@@ -95,14 +138,14 @@ export default function DashboardPage() {
     })
 
   // Next job = first today's job that hasn't been completed
-  const nextJob = todayJobs.find((j) => j.status !== "done" && j.status !== "invoicing") || null
+  const nextJob = todayJobs.find((j) => j.status !== "done" && j.status !== "invoicing" && j.status !== "lost") || null
   const remainingTodayJobs = todayJobs.filter((j) => j !== nextJob)
 
   const daySurveys = todayJobs.filter((j) => j.status === "draft" || j.status === "survey").length
   const dayExecutions = todayJobs.filter((j) => j.status === "execution").length
 
-  const actionJobs = jobs.filter(needsAction)
-  const attentionJobs = jobs.filter(needsAttention)
+  const actionJobs = jobs.filter((j) => needsAction(j.status))
+  const attentionJobs = jobs.filter((j) => needsAttention(j.status))
 
   return (
     <div className="flex flex-1 flex-col ios-fade-in">
@@ -112,7 +155,7 @@ export default function DashboardPage() {
           <div>
             <p className="text-[10px] text-text-tertiary tracking-widest">{todayFormatted}</p>
             <h1 className="text-[26px] font-bold tracking-tight mt-1">
-              Dobrý den, <em className="not-italic text-text-secondary">Jan</em>
+              Dobrý den
             </h1>
             {todayJobs.length > 0 && (
               <div className="flex items-center gap-3 mt-1">
@@ -147,13 +190,14 @@ export default function DashboardPage() {
               </button>
             </div>
             <button type="button" onClick={() => openJob(nextJob)}
-              className={`flex flex-col w-full text-left rounded-2xl bg-surface-1 overflow-hidden transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[4px] ${(STATUS_CONFIG[nextJob.status] ?? STATUS_CONFIG.draft).borderColor}`}>
+              className={`flex flex-col w-full text-left rounded-2xl bg-surface-1 overflow-hidden transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[4px] ${getStatusConfig(nextJob.status).borderColor}`}>
               <div className="px-4 pt-4 pb-2">
                 <div className="flex items-center gap-2">
                   {nextJob.time && <span className="text-lg font-mono font-bold">{nextJob.time}</span>}
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${(STATUS_CONFIG[nextJob.status] ?? STATUS_CONFIG.draft).color}`}>
-                    {(STATUS_CONFIG[nextJob.status] ?? STATUS_CONFIG.draft).label}
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${getStatusConfig(nextJob.status).color}`}>
+                    {getStatusConfig(nextJob.status).label}
                   </span>
+                  {nextJob.tags?.map((tag) => <TagPill key={tag} tag={tag} />)}
                 </div>
                 <span className="text-base font-semibold block mt-1">{nextJob.customerName || "Nový klient"}</span>
                 {(nextJob.pickupAddress || nextJob.deliveryAddress) && (
@@ -190,30 +234,33 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col gap-2">
               {remainingTodayJobs.map((job) => {
-                const config = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.draft
+                const config = getStatusConfig(job.status)
                 return (
-                  <button key={job.id} type="button" onClick={() => openJob(job)}
-                    className={`flex items-stretch w-full text-left rounded-2xl bg-surface-1 overflow-hidden transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[3px] ${config.borderColor}`}>
-                    {job.time && (
-                      <div className="flex items-center justify-center w-[60px] shrink-0">
-                        <span className="text-sm font-mono font-bold">{job.time}</span>
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0 px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold truncate">{job.customerName || "Nový klient"}</span>
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${config.color}`}>{config.label}</span>
-                      </div>
-                      {(job.pickupAddress || job.deliveryAddress) && (
-                        <span className="text-xs text-text-secondary truncate block mt-0.5">
-                          {(job.pickupAddress || "—").split(",")[0]} → {(job.deliveryAddress || "—").split(",")[0]}
-                        </span>
+                  <SwipeableCard key={job.id} onSwipeAction={(a) => handleSwipeAction(job, a)}>
+                    <button type="button" onClick={() => openJob(job)}
+                      className={`flex items-stretch w-full text-left overflow-hidden transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[3px] ${config.borderColor}`}>
+                      {job.time && (
+                        <div className="flex items-center justify-center w-[60px] shrink-0">
+                          <span className="text-sm font-mono font-bold">{job.time}</span>
+                        </div>
                       )}
-                    </div>
-                    <div className="flex items-center pr-3 shrink-0">
-                      <ChevronRight className="size-4 text-text-tertiary" />
-                    </div>
-                  </button>
+                      <div className="flex-1 min-w-0 px-4 py-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold truncate">{job.customerName || "Nový klient"}</span>
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${config.color}`}>{config.label}</span>
+                          {job.tags?.map((tag) => <TagPill key={tag} tag={tag} />)}
+                        </div>
+                        {(job.pickupAddress || job.deliveryAddress) && (
+                          <span className="text-xs text-text-secondary truncate block mt-0.5">
+                            {(job.pickupAddress || "—").split(",")[0]} → {(job.deliveryAddress || "—").split(",")[0]}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center pr-3 shrink-0">
+                        <ChevronRight className="size-4 text-text-tertiary" />
+                      </div>
+                    </button>
+                  </SwipeableCard>
                 )
               })}
             </div>
@@ -242,29 +289,32 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col gap-2">
               {actionJobs.slice(0, 3).map((job) => {
-                const config = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.draft
+                const config = getStatusConfig(job.status)
                 const dateFormatted = job.date
                   ? new Date(job.date + "T12:00:00").toLocaleDateString("cs-CZ", { weekday: "short", day: "numeric", month: "numeric" })
                   : null
                 return (
-                  <button key={job.id} type="button" onClick={() => openJob(job)}
-                    className={`flex items-stretch w-full text-left rounded-2xl bg-surface-1 overflow-hidden transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[3px] ${config.borderColor}`}>
-                    <div className="flex-1 min-w-0 px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold truncate">{job.customerName || "Nový klient"}</span>
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${config.color}`}>{config.label}</span>
+                  <SwipeableCard key={job.id} onSwipeAction={(a) => handleSwipeAction(job, a)}>
+                    <button type="button" onClick={() => openJob(job)}
+                      className={`flex items-stretch w-full text-left overflow-hidden transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[3px] ${config.borderColor}`}>
+                      <div className="flex-1 min-w-0 px-4 py-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold truncate">{job.customerName || "Nový klient"}</span>
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-surface-2 ${config.color}`}>{config.label}</span>
+                          {job.tags?.map((tag) => <TagPill key={tag} tag={tag} />)}
+                        </div>
+                        {(job.pickupAddress || job.deliveryAddress) && (
+                          <span className="text-xs text-text-secondary truncate block mt-0.5">
+                            {(job.pickupAddress || "—").split(",")[0]} → {(job.deliveryAddress || "—").split(",")[0]}
+                          </span>
+                        )}
+                        {dateFormatted && <span className="text-[11px] font-mono text-text-tertiary mt-1 block">{dateFormatted}</span>}
                       </div>
-                      {(job.pickupAddress || job.deliveryAddress) && (
-                        <span className="text-xs text-text-secondary truncate block mt-0.5">
-                          {(job.pickupAddress || "—").split(",")[0]} → {(job.deliveryAddress || "—").split(",")[0]}
-                        </span>
-                      )}
-                      {dateFormatted && <span className="text-[11px] font-mono text-text-tertiary mt-1 block">{dateFormatted}</span>}
-                    </div>
-                    <div className="flex items-center pr-3 shrink-0">
-                      <ChevronRight className="size-4 text-text-tertiary" />
-                    </div>
-                  </button>
+                      <div className="flex items-center pr-3 shrink-0">
+                        <ChevronRight className="size-4 text-text-tertiary" />
+                      </div>
+                    </button>
+                  </SwipeableCard>
                 )
               })}
             </div>
@@ -282,24 +332,29 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col gap-2">
               {attentionJobs.slice(0, 3).map((job) => {
-                const config = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.offer
+                const config = getStatusConfig(job.status)
                 const AttnIcon = ATTENTION_ICON[job.status] ?? AlertCircle
                 return (
-                  <button key={job.id} type="button" onClick={() => openJob(job)}
-                    className={`flex items-center gap-3 rounded-2xl bg-surface-1 px-4 py-3.5 w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[3px] ${config.borderColor}`}>
-                    <div className={`flex items-center justify-center size-9 rounded-full ${config.color} bg-surface-2 shrink-0`}>
-                      <AttnIcon className={`size-4 ${config.color}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-semibold">{job.customerName || "Nový klient"}</span>
-                      {(job.pickupAddress || job.deliveryAddress) && (
-                        <span className="text-xs text-text-tertiary block mt-0.5">
-                          {(job.pickupAddress || "—").split(",")[0]} → {(job.deliveryAddress || "—").split(",")[0]}
-                        </span>
-                      )}
-                    </div>
-                    <ChevronRight className="size-4 text-text-tertiary shrink-0" />
-                  </button>
+                  <SwipeableCard key={job.id} onSwipeAction={(a) => handleSwipeAction(job, a)}>
+                    <button type="button" onClick={() => openJob(job)}
+                      className={`flex items-center gap-3 px-4 py-3.5 w-full text-left transition-colors hover:bg-surface-2 active:bg-surface-2 border-l-[3px] ${config.borderColor}`}>
+                      <div className={`flex items-center justify-center size-9 rounded-full ${config.color} bg-surface-2 shrink-0`}>
+                        <AttnIcon className={`size-4 ${config.color}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold">{job.customerName || "Nový klient"}</span>
+                          {job.tags?.map((tag) => <TagPill key={tag} tag={tag} />)}
+                        </div>
+                        {(job.pickupAddress || job.deliveryAddress) && (
+                          <span className="text-xs text-text-tertiary block mt-0.5">
+                            {(job.pickupAddress || "—").split(",")[0]} → {(job.deliveryAddress || "—").split(",")[0]}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronRight className="size-4 text-text-tertiary shrink-0" />
+                    </button>
+                  </SwipeableCard>
                 )
               })}
             </div>
@@ -319,7 +374,6 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
-
     </div>
   )
 }

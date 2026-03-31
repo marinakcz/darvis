@@ -10,6 +10,28 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core"
 
+/* ── Vehicles (vozový park) ── */
+
+export const vehicles = pgTable("vehicles", {
+  id: varchar("id", { length: 50 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: varchar("description", { length: 255 }),
+  capacity: integer("capacity").notNull(),
+  hourlyRate: integer("hourly_rate").notNull(),
+  timeMultiplier: numeric("time_multiplier", { precision: 4, scale: 2 }).notNull().default("1.30"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+/* ── Settings (globální nastavení) ── */
+
+export const settings = pgTable("settings", {
+  key: varchar("key", { length: 100 }).primaryKey(),
+  value: jsonb("value").$type<unknown>().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
 /* ── Customers ── */
 
 export const customers = pgTable("customers", {
@@ -64,11 +86,16 @@ export const jobs = pgTable("jobs", {
   technicianNotes: text("technician_notes"),
   dispatcherNote: text("dispatcher_note"),
 
-  // Stav zakázky (Blok 2 rozšíří)
+  // Stav zakázky
   status: varchar("status", { length: 50 }).notNull().default("draft"),
 
   // CRM
   fromCRM: boolean("from_crm").notNull().default(false),
+  tags: jsonb("tags").$type<string[]>().default([]),
+  lossReason: varchar("loss_reason", { length: 50 }),
+  lossNote: text("loss_note"),
+  winReason: varchar("win_reason", { length: 50 }),
+  winNote: text("win_note"),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -126,6 +153,9 @@ export const offers = pgTable("offers", {
     bubbleWrap: number
     packingPaper: number
   }>().notNull(),
+
+  // Poznámka pro klienta
+  clientNote: text("client_note"),
 
   // Stav nabídky
   status: varchar("status", { length: 50 }).notNull().default("sent"),

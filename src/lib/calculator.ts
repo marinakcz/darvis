@@ -1,8 +1,7 @@
-import type { Job, Calculation, MaterialOrder, SurveyRoom } from "./types"
+import type { Job, Calculation, MaterialOrder } from "./types"
 import { getCatalogItem } from "./catalog"
 import {
   VEHICLES,
-  TRUCK_CAPACITY,
   WORKER_HOURLY_RATE,
   BASE_WORKERS_PER_TRUCK,
   HOURS_PER_CUBIC_METER,
@@ -11,18 +10,28 @@ import {
   MATERIAL_RATES,
   BOXES_PER_CUBIC_METER,
   WRAP_ROLLS_PER_TRUCK,
-  TAPE_ROLLS_PER_TRUCK,
   SERVICE_RATE_DISASSEMBLY,
   SERVICE_RATE_PACKING,
   SERVICE_RATE_ASSEMBLY,
   MIN_PRICE,
 } from "./constants"
 
-export function calculateJob(job: Job): Calculation {
-  // Resolve selected vehicle (fallback to medium-24)
-  const vehicle = VEHICLES.find((v) => v.id === job.vehicleId) ?? VEHICLES[2]
+/** Vehicle data that can come from DB or constants */
+export interface VehicleData {
+  id: string
+  capacity: number
+  hourlyRate: number
+  timeMultiplier?: number
+}
+
+export function calculateJob(job: Job, vehicleOverride?: VehicleData): Calculation {
+  // Resolve selected vehicle: DB override → constants fallback
+  const vehicle = vehicleOverride
+    ?? VEHICLES.find((v) => v.id === job.vehicleId)
+    ?? VEHICLES[2]
   const vehicleCapacity = vehicle.capacity
   const vehicleHourlyRate = vehicle.hourlyRate
+  const timeMultiplier = vehicleOverride?.timeMultiplier ?? 1.0
 
   let totalVolume: number
   let servicesCost = 0
@@ -80,9 +89,9 @@ export function calculateJob(job: Job): Calculation {
       : 0
   const floorPenaltyHours = pickupFloorPenalty + deliveryFloorPenalty
 
-  // Čas
+  // Čas — distanceHours násobeno timeMultiplier (nákladní auto jede pomaleji)
   const baseHours = totalVolume * HOURS_PER_CUBIC_METER
-  const distanceHours = job.distance * HOURS_PER_KM
+  const distanceHours = job.distance * HOURS_PER_KM * timeMultiplier
   const estimatedHours = Math.max(2, Math.ceil((baseHours + distanceHours + floorPenaltyHours) * 2) / 2)
 
   // Materiál — buď z uživatelského vstupu, nebo auto-odhad
